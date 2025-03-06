@@ -1,0 +1,19 @@
+.container {
+    max-width: 1200px;
+  }
+  
+  /* Shimmer animation */
+  @keyframes shimmer {
+    0% {
+      background-position: -468px 0;
+    }
+    100% {
+      background-position: 468px 0;
+    }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite linear;
+    background: linear-gradient(to right, #e5e7eb 8%, #d1d5db 18%, #e5e7eb 33%);
+    background-size: 800px 104px;
+  }

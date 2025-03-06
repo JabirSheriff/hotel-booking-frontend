@@ -1,0 +1,13 @@
+.container {
+    max-width: 1200px;
+  }
+  
+  /* Ensure table responsiveness */
+  table {
+    width: 100%;
+  }
+  
+  /* Pie chart canvas styling */
+  canvas {
+    display: block;
+  }

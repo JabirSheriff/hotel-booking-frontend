@@ -1,0 +1,131 @@
+<!-- Header -->
+<app-header [ngClass]="{'blur-sm': isModalOpen}"></app-header>
+
+<!-- Auth Modals -->
+<app-auth-modals (modalVisibilityChange)="onModalVisibilityChange($event)"></app-auth-modals>
+
+<!-- Extended Blue Background Section (Dynamically Colored) -->
+<div
+  class="w-full pt-[6rem] min-h-[30rem]"
+  [ngClass]="{
+    'bg-upcoming': activeTab === 'upcoming',
+    'bg-cancelled': activeTab === 'cancelled',
+    'bg-completed': activeTab === 'completed',
+    'blur-sm': isModalOpen
+  }"
+>
+  <div class="container mx-auto px-5 max-w-6xl">
+    <!-- Flex container for avatar and text -->
+    <div class="flex flex-col md:flex-row md:items-center py-6">
+      <!-- Enlarged Avatar (aligned with the logo) -->
+      <div class="avatar bg-white text-[#003b95] font-arial font-medium w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto md:mx-0 md:mr-6 mb-4 md:mb-0">
+        {{ userInitial }}
+      </div>
+
+      <!-- Welcome Message and Quote -->
+      <div class="flex-1 text-center md:text-left">
+        <h1 class="text-4xl font-bold text-white mb-2">Welcome to Bookr, {{ userFullName }}!</h1>
+        <p class="text-xl text-gray-200 italic">“Stay. Relax. Repeat.”</p>
+      </div>
+    </div>
+
+    <!-- Breadcrumb Navigation -->
+    <div class="py-4">
+      <nav class="text-lg">
+        <a
+          [routerLink]="['/my-account']"
+          class="hover:underline"
+          [ngClass]="{
+            'text-gray-200': activeTab === 'upcoming' || activeTab === 'cancelled',
+            'text-gray-600': activeTab === 'completed'
+          }"
+        >
+          My Account
+        </a>
+        <span
+          class="mx-2"
+          [ngClass]="{
+            'text-gray-200': activeTab === 'upcoming' || activeTab === 'cancelled',
+            'text-gray-600': activeTab === 'completed'
+          }"
+        >
+          >
+        </span>
+        <span
+          class="font-semibold"
+          [ngClass]="{
+            'text-white': activeTab === 'upcoming' || activeTab === 'cancelled',
+            'text-gray-800': activeTab === 'completed'
+          }"
+        >
+          My Bookings
+        </span>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- White Rectangle-Shaped Element -->
+<div class="relative">
+  <div class="container mx-auto px-5 max-w-6xl">
+    <div class="bg-white rounded-2xl shadow-lg p-8 absolute left-1/2 transform -translate-x-1/2 -top-48 w-full max-w-5xl min-h-[32rem]">
+      <!-- Tabs -->
+      <div class="flex space-x-6 border-b border-gray-200 mb-6">
+        <!-- Upcoming Trips -->
+        <button
+          (click)="setActiveTab('upcoming')"
+          class="flex items-center pb-2 px-2 focus:outline-none"
+          [ngClass]="{
+            'border-b-2 border-upcoming text-upcoming': activeTab === 'upcoming',
+            'text-gray-600': activeTab !== 'upcoming'
+          }"
+        >
+          <img src="upcoming.png" alt="Upcoming Icon" class="h-10 w-10 mr-2" />
+          Upcoming Trips
+        </button>
+
+        <!-- Cancelled -->
+        <button
+          (click)="setActiveTab('cancelled')"
+          class="flex items-center pb-2 px-2 focus:outline-none"
+          [ngClass]="{
+            'border-b-2 border-cancelled text-cancelled': activeTab === 'cancelled',
+            'text-gray-600': activeTab !== 'cancelled'
+          }"
+        >
+          <img src="cancelled.png" alt="Cancelled Icon" class="h-10 w-10 mr-2" />
+          Cancelled
+        </button>
+
+        <!-- Completed -->
+        <button
+          (click)="setActiveTab('completed')"
+          class="flex items-center pb-2 px-2 focus:outline-none"
+          [ngClass]="{
+            'border-b-2 border-completed text-completed': activeTab === 'completed',
+            'text-gray-600': activeTab !== 'completed'
+          }"
+        >
+          <img src="completed.png" alt="Completed Icon" class="h-10 w-10 mr-2" />
+          Completed
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div>
+        <div *ngIf="activeTab === 'upcoming'" class="text-gray-600 text-center">
+          Upcoming Trips content will be added here.
+        </div>
+        <div *ngIf="activeTab === 'cancelled'" class="text-gray-600 text-center">
+          Cancelled bookings content will be added here.
+        </div>
+        <div *ngIf="activeTab === 'completed'" class="text-gray-600 text-center">
+          Completed bookings content will be added here.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spacer to ensure the white rectangle is visible below the blue section -->
+<div class="h-64"></div>

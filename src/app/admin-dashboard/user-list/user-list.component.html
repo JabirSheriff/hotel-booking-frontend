@@ -1,0 +1,98 @@
+<div class="p-4">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">User Management</h2>
+  
+    <!-- Search and Filter -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+      <input 
+        [(ngModel)]="searchQuery" 
+        (ngModelChange)="onSearchChange()"
+        type="text" 
+        placeholder="Search by name or email..." 
+        class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+      >
+      <div class="relative">
+        <button 
+          (click)="toggleFilter()"
+          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+        >
+          {{ filterRole }}
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div 
+          *ngIf="isFilterOpen"
+          [@dropdown]
+          class="absolute mt-2 w-48 bg-white rounded-md shadow-lg z-10 transform origin-top"
+        >
+          <button 
+            *ngFor="let role of ['All Users', 'Admin', 'Customers', 'Hotel Owners', 'Unassigned']"
+            (click)="setFilter(role)"
+            class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-100 transition-colors duration-200"
+          >
+            {{ role }}
+          </button>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Error Message -->
+    <p *ngIf="errorMessage" class="text-red-500 text-center mb-4">{{ errorMessage }}</p>
+  
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full bg-white rounded-lg shadow-md">
+        <thead>
+          <tr class="bg-blue-600 text-white">
+            <th class="p-3 text-left">ID</th>
+            <th class="p-3 text-left">Name</th>
+            <th class="p-3 text-left">Email</th>
+            <th class="p-3 text-left">Phone</th>
+            <th class="p-3 text-left">Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="filteredUsers.length === 0" class="transition-all duration-300">
+            <td colspan="5" class="p-4 text-center text-gray-600">No users found.</td>
+          </tr>
+          <tr *ngFor="let user of filteredUsers" 
+              [@tableFade]
+              class="border-b hover:bg-gray-50 cursor-pointer transition-colors duration-200"
+              (click)="showUserDetails(user)">
+            <td class="p-3">{{ user.id }}</td>
+            <td class="p-3">{{ user.fullName }}</td>
+            <td class="p-3">{{ user.email }}</td>
+            <td class="p-3">{{ user.phoneNumber }}</td>
+            <td class="p-3">{{ user.role }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  
+    <!-- Popup -->
+    <div *ngIf="selectedUser" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center transition-opacity duration-300">
+      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full transform transition-all duration-300 scale-100">
+        <h3 class="text-xl font-bold text-blue-600 mb-4">User Details</h3>
+        <p><strong>ID:</strong> {{ selectedUser.id }}</p>
+        <p><strong>Name:</strong> {{ selectedUser.fullName }}</p>
+        <p><strong>Email:</strong> {{ selectedUser.email }}</p>
+        <p><strong>Phone:</strong> {{ selectedUser.phoneNumber }}</p>
+        <p><strong>Current Role:</strong> {{ selectedUser.role }}</p>
+        
+        <div class="mt-4 flex gap-2">
+          <button 
+            (click)="toggleHotelOwnerRole(selectedUser)" 
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 active:scale-95 transition-transform duration-150"
+          >
+            {{ selectedUser.role === 'Unassigned' ? 'Approve as Hotel Owner' : 'Revert to Unassigned' }}
+          </button>
+          <button 
+            (click)="closePopup()" 
+            class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 active:scale-95 transition-transform duration-150"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>

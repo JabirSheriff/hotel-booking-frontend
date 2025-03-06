@@ -1,0 +1,187 @@
+<!-- Header -->
+<app-header [ngClass]="{'blur-sm': isModalOpen}"></app-header>
+
+<!-- Auth Modals -->
+<app-auth-modals (modalVisibilityChange)="onModalVisibilityChange($event)"></app-auth-modals>
+
+<!-- Extended Blue Background Section -->
+<div class="bg-[#003b95] w-full pt-[6rem] min-h-[30rem]" [ngClass]="{'blur-sm': isModalOpen}">
+  <div class="container mx-auto px-5 max-w-6xl">
+    <!-- Flex container for avatar and text -->
+    <div class="flex flex-col md:flex-row md:items-center py-6">
+      <!-- Enlarged Avatar (aligned with the logo) -->
+      <div class="avatar bg-white text-[#003b95] font-arial font-medium w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto md:mx-0 md:mr-6 mb-4 md:mb-0">
+        {{ userInitial }}
+      </div>
+
+      <!-- Welcome Message and Quote (to the right of the avatar on medium screens and above) -->
+      <div class="flex-1 text-center md:text-left">
+        <h1 class="text-4xl font-bold text-white mb-2">Welcome to Bookr, {{ userFullName }}!</h1>
+        <p class="text-xl text-gray-200 italic">“Stay. Relax. Repeat.”</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- White Rectangle-Shaped Element -->
+<div class="relative">
+  <div class="container mx-auto px-5 max-w-6xl">
+    <div class="bg-white rounded-2xl shadow-lg p-8 absolute left-1/2 transform -translate-x-1/2 -top-48 w-full max-w-5xl min-h-[32rem]">
+      <!-- Profile Details Title and Edit Button -->
+      <div class="flex justify-between items-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-800">Profile Details</h2>
+        <button (click)="openEditModal()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center">
+          <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0l-1.414-1.414a2 2 0 010-2.828z"></path>
+          </svg>
+          Edit
+        </button>
+      </div>
+
+      <!-- User Details -->
+      <div class="mb-8">
+        <div class="space-y-4 max-w-2xl mx-auto">
+          <p class="text-lg text-gray-600 flex items-center">
+            <span class="font-semibold w-56 text-left">Name:</span>
+            <span>{{ userFullName }}</span>
+          </p>
+          <hr class="border-t border-gray-200">
+          <p class="text-lg text-gray-600 flex items-center">
+            <span class="font-semibold w-56 text-left">Phone Number:</span>
+            <span>{{ userPhoneNumber }}</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Login Details Heading -->
+      <h3 class="text-3xl font-bold text-gray-800 mb-12">Login Details</h3>
+
+      <!-- Login Details -->
+      <div>
+        <div class="space-y-4 max-w-2xl mx-auto">
+          <p class="text-lg text-gray-600 flex items-center">
+            <span class="font-semibold w-56 text-left">Email Address:</span>
+            <span>{{ userEmail }}</span>
+          </p>
+          <hr class="border-t border-gray-200">
+          <div class="flex items-center">
+            <p class="text-lg text-gray-600 flex items-center flex-1">
+              <span class="font-semibold w-56 text-left">Password:</span>
+              <span>••••••••</span>
+            </p>
+            <button (click)="openChangePasswordModal()" class="text-blue-600 hover:underline text-lg ml-4">Change Password?</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<ng-container *ngIf="showEditModal">
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md relative border border-gray-100">
+      <!-- Close Button -->
+      <button (click)="closeEditModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Modal Title -->
+      <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">
+        {{ isPasswordOnlyMode ? 'Change Password' : 'Edit Profile' }}
+      </h2>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="text-red-500 text-center mb-4">{{ errorMessage }}</div>
+
+      <!-- Edit Form -->
+      <form class="space-y-6" (ngSubmit)="saveChanges()">
+        <!-- Name -->
+        <div>
+          <label for="editFullName" class="block text-sm font-medium text-gray-700 mb-1" [ngClass]="{'text-gray-400': isPasswordOnlyMode}">Name</label>
+          <input 
+            type="text" 
+            id="editFullName" 
+            [(ngModel)]="editFullName" 
+            name="editFullName" 
+            [disabled]="isPasswordOnlyMode"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+            required
+          >
+        </div>
+
+        <!-- Phone Number -->
+        <div>
+          <label for="editPhoneNumber" class="block text-sm font-medium text-gray-700 mb-1" [ngClass]="{'text-gray-400': isPasswordOnlyMode}">Phone Number</label>
+          <input 
+            type="tel" 
+            id="editPhoneNumber" 
+            [(ngModel)]="editPhoneNumber" 
+            name="editPhoneNumber" 
+            [disabled]="isPasswordOnlyMode"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+            required
+          >
+        </div>
+
+        <!-- Email (Non-Editable) -->
+        <div>
+          <label for="editEmail" class="block text-sm font-medium text-gray-400 mb-1">Email Address</label>
+          <input 
+            type="email" 
+            id="editEmail" 
+            [value]="userEmail || ''" 
+            disabled
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none transition-all shadow-sm"
+          >
+        </div>
+
+        <!-- Password -->
+        <div class="relative">
+          <label for="editPassword" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+          <input 
+            [type]="showEditPassword ? 'text' : 'password'" 
+            id="editPassword" 
+            [(ngModel)]="editPassword" 
+            name="editPassword" 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+            placeholder="Enter new password"
+          >
+          <button 
+            type="button" 
+            (click)="toggleEditPasswordVisibility()" 
+            class="absolute inset-y-0 right-0 flex items-center pr-3 mt-6 text-gray-500 hover:text-gray-700"
+          >
+            <svg *ngIf="!showEditPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <svg *ngIf="showEditPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c-4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex justify-center mt-8">
+          <button 
+            type="submit" 
+            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md flex items-center"
+            [disabled]="isSaving"
+          >
+            <svg *ngIf="isSaving" class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            {{ isSaving ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Spacer to ensure the white rectangle is visible below the blue section -->
+<div class="h-64"></div>

@@ -1,0 +1,211 @@
+<div class="min-h-screen bg-gray-100">
+  <!-- Navigation -->
+  <div class="bg-white shadow-md p-4 flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <img src="Bookr.png" alt="Bookr.com Logo" class="w-10 h-10">
+      <h1 class="text-xl font-bold text-blue-600">Customer Dashboard</h1>
+    </div>
+    <div class="relative">
+      <div
+        (click)="toggleTooltip()"
+        class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700"
+      >
+        {{ getUserInitials() }}
+      </div>
+      <div
+        *ngIf="showTooltip"
+        class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md py-2 z-10"
+      >
+        <span class="block px-4 py-2 text-gray-700">{{ userEmail }}</span>
+        <a routerLink="/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Home</a>
+        <a (click)="logout()" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="p-6 max-w-6xl mx-auto">
+    <!-- User Details -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h2 class="text-2xl font-bold text-blue-600 mb-4">Welcome, {{ userEmail }}</h2>
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl">
+          {{ getUserInitials() }}
+        </div>
+        <div>
+          <p class="text-gray-700"><strong>Email:</strong> {{ userEmail }}</p>
+          <p class="text-gray-700"><strong>Role:</strong> {{ userRole }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved Bookings Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Saved Bookings</h3>
+      <div *ngIf="savedBookings.length === 0" class="text-gray-600">No saved bookings.</div>
+      <div class="grid gap-4">
+        <div *ngFor="let saved of savedBookings" class="border-b pb-4">
+          <p><strong>Hotel ID:</strong> {{ saved.hotelId }}</p>
+          <p><strong>Check-In:</strong> {{ saved.checkInDate }}</p>
+          <p><strong>Check-Out:</strong> {{ saved.checkOutDate }}</p>
+          <p><strong>Rooms:</strong> {{ saved.numberOfRooms }}</p>
+          <p><strong>Guests:</strong> {{ saved.numberOfGuests }}</p>
+          <p><strong>Room Type:</strong> {{ roomTypes[saved.roomType].name }}</p>
+          <p><strong>Special Request:</strong> {{ saved.specialRequest || 'None' }}</p>
+          <button
+            (click)="editSavedBooking(saved)"
+            class="mt-2 bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700"
+          >
+            Edit
+          </button>
+          <button
+            (click)="bookSavedBooking(saved)"
+            class="mt-2 ml-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            Book Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Edit Form -->
+      <div *ngIf="editingBooking" class="mt-6 border p-4 rounded-md">
+        <h4 class="text-lg font-semibold text-gray-800 mb-2">Edit Saved Booking</h4>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Check-In Date</label>
+            <input
+              type="date"
+              [(ngModel)]="editingBooking.checkInDate"
+              class="w-full p-2 border border-gray-300 rounded-md"
+            >
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Check-Out Date</label>
+            <input
+              type="date"
+              [(ngModel)]="editingBooking.checkOutDate"
+              class="w-full p-2 border border-gray-300 rounded-md"
+            >
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Number of Rooms</label>
+            <input
+              type="number"
+              [(ngModel)]="editingBooking.numberOfRooms"
+              min="1"
+              class="w-full p-2 border border-gray-300 rounded-md"
+            >
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Number of Guests</label>
+            <input
+              type="number"
+              [(ngModel)]="editingBooking.numberOfGuests"
+              min="1"
+              class="w-full p-2 border border-gray-300 rounded-md"
+            >
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Room Type</label>
+            <select
+              [(ngModel)]="editingBooking.roomType"
+              class="w-full p-2 border border-gray-300 rounded-md"
+            >
+              <option *ngFor="let type of roomTypes" [value]="type.id">{{ type.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Special Request</label>
+            <textarea
+              [(ngModel)]="editingBooking.specialRequest"
+              class="w-full p-2 border border-gray-300 rounded-md"
+            ></textarea>
+          </div>
+          <button
+            (click)="saveEditedBooking()"
+            class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booked Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Booked</h3>
+      <div *ngIf="bookings.length === 0" class="text-gray-600">No bookings yet.</div>
+      <div class="grid gap-4">
+        <div *ngFor="let booking of bookings" class="border-b pb-4">
+          <p><strong>Booking ID:</strong> {{ booking.id }}</p>
+          <p><strong>Hotel ID:</strong> {{ booking.hotelId }}</p>
+          <p><strong>Check-In:</strong> {{ booking.checkInDate }}</p>
+          <p><strong>Check-Out:</strong> {{ booking.checkOutDate }}</p>
+          <p><strong>Guests:</strong> {{ booking.numberOfGuests }}</p>
+          <p><strong>Total Price:</strong> ${{ booking.totalPrice }}</p>
+          <p><strong>Status:</strong> {{ booking.status }}</p>
+          <p><strong>Special Request:</strong> {{ booking.specialRequest || 'None' }}</p>
+          <p><strong>Rooms:</strong> {{ getRoomIds(booking) }}</p>
+          <div *ngIf="booking.status !== 'Paid'" class="mt-2 flex items-center gap-2">
+            <select [(ngModel)]="booking.selectedPaymentMethod" class="p-2 border border-gray-300 rounded-md">
+              <option *ngFor="let method of paymentMethods" [value]="method.value">{{ method.label }}</option>
+            </select>
+            <button (click)="payNow(booking)" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+              Pay Now
+            </button>
+          </div>
+          <span *ngIf="booking.status === 'Paid'" class="mt-2 inline-block bg-green-600 text-white px-4 py-1 rounded-md">Paid</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Your Reviews</h3>
+      <div *ngIf="hotels.length === 0" class="text-gray-600">No reviews yet.</div>
+      <div class="grid gap-4">
+        <div *ngFor="let hotel of hotels" class="border-b pb-4">
+          <p><strong>Hotel:</strong> {{ hotel.name }}</p>
+          <div *ngFor="let review of hotel.reviews" class="mt-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-gray-300 text-white rounded-full flex items-center justify-center">
+                {{ review.customerName.slice(0, 2).toUpperCase() }}
+              </div>
+              <div>
+                <p *ngIf="editingReview?.reviewId !== review.reviewId" class="text-gray-700 text-sm">{{ review.comment }}</p>
+                <textarea
+                  *ngIf="editingReview?.reviewId === review.reviewId"
+                  [(ngModel)]="editingReview!.comment"
+                  class="w-full p-2 border border-gray-300 rounded-md text-sm"
+                ></textarea>
+                <p class="text-gray-500 text-xs">{{ review.rating }} ★ | {{ review.createdAt | date:'mediumDate' }}</p>
+                <div class="flex gap-2 mt-1">
+                  <button
+                    *ngIf="editingReview?.reviewId !== review.reviewId"
+                    (click)="editReview(review)"
+                    class="text-blue-600 text-sm hover:underline"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    *ngIf="editingReview?.reviewId === review.reviewId"
+                    (click)="saveReview(hotel)"
+                    class="text-blue-600 text-sm hover:underline"
+                  >
+                    Save
+                  </button>
+                  <button
+                    (click)="removeReview(hotel, review.reviewId)"
+                    class="text-red-600 text-sm hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

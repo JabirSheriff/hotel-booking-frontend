@@ -1,0 +1,35 @@
+/* landing-page.component.css */
+.city-icon {
+  filter: grayscale(100%) brightness(0%); /* Makes the image appear black */
+  transition: transform 0.2s ease-in-out;
+}
+
+.city-icon:hover {
+  transform: scale(1.1); /* Slight scale-up on hover */
+}
+
+/* Ensure the underline stays below the icons and text */
+.city-button {
+  position: relative;
+  z-index: 10; /* Ensure buttons (and their children) are above the underline */
+}
+
+.underline {
+  z-index: 0; /* Ensure the underline is below the buttons */
+}
+
+/* Existing styles */
+.font-arial {
+  font-family: Arial, sans-serif;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.3s ease-in-out;
+}

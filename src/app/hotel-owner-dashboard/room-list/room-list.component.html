@@ -1,0 +1,135 @@
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+      <div class="flex items-center gap-2">
+        <a routerLink="/hotel-owner-dashboard" class="text-blue-600 hover:underline flex items-center gap-1">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Hotels
+        </a>
+        <h2 class="text-xl font-semibold text-gray-800">Rooms for Hotel ID: {{ hotelId }}</h2>
+      </div>
+      <button 
+        (click)="toggleAddRoomPopup()" 
+        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+      >
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Add Room
+      </button>
+    </div>
+  
+    <p *ngIf="errorMessage" class="text-red-500 text-center mb-4">{{ errorMessage }}</p>
+  
+    <!-- Room List -->
+    <div *ngIf="rooms.length === 0" class="text-gray-600 text-center">
+      No rooms found. Add your first room!
+    </div>
+    <div class="grid gap-4 grid-cols-1 md:grid-cols-2">
+      <div *ngFor="let room of rooms" [@fadeIn] class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+        <p><strong>Room Number:</strong> {{ room.roomNumber }}</p>
+        <p><strong>Type:</strong> {{ room.type }}</p>
+        <p><strong>Description:</strong> {{ room.description }}</p>
+        <p><strong>Price/Night:</strong> ${{ room.pricePerNight }}</p>
+        <p><strong>Capacity:</strong> {{ room.capacity }}</p>
+        <div class="flex items-center gap-2">
+          <span><strong>Available:</strong></span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              [(ngModel)]="room.isAvailable" 
+              (ngModelChange)="toggleAvailability(room)" 
+              name="isAvailable_{{room.id}}" 
+              class="sr-only peer"
+            >
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+        <div class="mt-2 flex gap-2">
+          <button (click)="toggleEditRoomPopup(room)" class="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600">Edit</button>
+          <button (click)="deleteRoom(room.id)" class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600">Delete</button>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Add Room Popup -->
+    <div *ngIf="showAddRoomPopup" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div [@fadeIn] class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Add New Room</h3>
+        <form (ngSubmit)="addRoom()" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Room Number</label>
+            <input [(ngModel)]="newRoom.roomNumber" name="roomNumber" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Type</label>
+            <select [(ngModel)]="newRoom.type" name="type" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+              <option value="Single">Single</option>
+              <option value="Double">Double</option>
+              <option value="Suite">Suite</option>
+              <option value="Deluxe">Deluxe</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Description</label>
+            <input [(ngModel)]="newRoom.description" name="description" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Price Per Night</label>
+            <input [(ngModel)]="newRoom.pricePerNight" name="pricePerNight" type="number" min="1" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Capacity</label>
+            <input [(ngModel)]="newRoom.capacity" name="capacity" type="number" min="1" max="10" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" (click)="toggleAddRoomPopup()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save Room</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  
+    <!-- Edit Room Popup -->
+    <div *ngIf="showEditRoomPopup && editRoom" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div [@fadeIn] class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Edit Room: {{ editRoom.roomNumber }}</h3>
+        <form (ngSubmit)="updateRoom()" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Room Number</label>
+            <input [(ngModel)]="editRoom.roomNumber" name="roomNumber" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Type</label>
+            <select [(ngModel)]="editRoom.type" name="type" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+              <option value="Single">Single</option>
+              <option value="Double">Double</option>
+              <option value="Suite">Suite</option>
+              <option value="Deluxe">Deluxe</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Description</label>
+            <input [(ngModel)]="editRoom.description" name="description" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Price Per Night</label>
+            <input [(ngModel)]="editRoom.pricePerNight" name="pricePerNight" type="number" min="1" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Capacity</label>
+            <input [(ngModel)]="editRoom.capacity" name="capacity" type="number" min="1" max="10" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Available</label>
+            <input [(ngModel)]="editRoom.isAvailable" name="isAvailable" type="checkbox" class="h-5 w-5 text-blue-600 rounded" />
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" (click)="toggleEditRoomPopup(editRoom)" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>

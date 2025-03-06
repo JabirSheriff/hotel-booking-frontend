@@ -1,0 +1,182 @@
+<!-- Header -->
+<app-header [ngClass]="{'blur-sm': isModalOpen}"></app-header>
+
+<!-- Auth Modals -->
+<app-auth-modals (modalVisibilityChange)="onModalVisibilityChange($event)"></app-auth-modals>
+
+<!-- Extended Blue Background Section -->
+<div class="bg-[#003b95] w-full pt-[10rem] min-h-[30rem]" [ngClass]="{'blur-sm': isModalOpen}">
+  <!-- Loading Spinner or Search Form -->
+  <ng-container *ngIf="isContentLoading; else contentLoaded">
+    <div class="flex justify-center items-center min-h-[50vh]">
+      <svg class="animate-spin h-10 w-10 text-white" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+    </div>
+  </ng-container>
+  <ng-template #contentLoaded>
+    <div class="max-w-7xl mx-auto px-5 py-10 relative">
+      <!-- Smaller Rectangle for Cities -->
+      <div class="bg-white rounded-2xl shadow-lg p-4 absolute left-1/2 transform -translate-x-1/2 -top-8 w-[80%] max-w-5xl flex justify-around items-center overflow-visible z-20">
+        <button 
+          *ngFor="let city of cities; let i = index" 
+          (click)="selectLocation(city.name); selectCity(i)" 
+          class="flex flex-col items-center space-y-1 relative z-10"
+          #cityButton
+        >
+          <img 
+            [src]="city.icon" 
+            [alt]="city.name + ' Icon'" 
+            class="h-12 w-12 object-contain city-icon z-10" 
+            (error)="onImageError($event, city.name)" 
+            (load)="onImageLoad($event, city.name)"
+          >
+          <span class="text-sm font-medium text-gray-700 z-10">{{ city.name }}</span>
+          <!-- Underline for the selected city -->
+          <div 
+            *ngIf="selectedCityIndex === i" 
+            class="absolute bottom-[-4px] left-0 h-1 bg-blue-600 transition-all duration-300 ease-in-out z-0"
+            [ngStyle]="{
+              'width': underlineWidth + 'px',
+              'transform': 'translateX(' + underlinePosition + 'px)'
+            }"
+          ></div>
+        </button>
+      </div>
+
+      <!-- Main Search Form Rectangle -->
+      <div class="bg-white rounded-2xl shadow-lg p-4 pt-16 relative z-10">
+        <!-- Form -->
+        <form class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4" (ngSubmit)="onSearch()">
+          <!-- Location Input -->
+          <div class="flex-1 w-full">
+            <label class="block text-sm font-medium text-gray-700">Where Do you want to Stay?</label>
+            <div class="relative">
+              <input 
+                type="text" 
+                [(ngModel)]="searchLocation" 
+                name="searchLocation" 
+                (input)="onLocationInput($event)" 
+                placeholder="Goa, India" 
+                class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+              <!-- Dropdown for suggestions -->
+              <div *ngIf="locationSuggestions.length > 0" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                <div 
+                  *ngFor="let suggestion of locationSuggestions" 
+                  (click)="selectLocation(suggestion)" 
+                  class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  {{ suggestion }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Check-In -->
+          <div class="w-full md:w-56">
+            <label class="block text-sm font-medium text-gray-700">Check-In</label>
+            <input 
+              type="date" 
+              [(ngModel)]="checkInDate" 
+              name="checkInDate" 
+              [min]="today" 
+              (change)="updateCheckOutMinDate()" 
+              class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+          </div>
+
+          <!-- Check-Out -->
+          <div class="w-full md:w-56">
+            <label class="block text-sm font-medium text-gray-700">Check-Out</label>
+            <input 
+              type="date" 
+              [(ngModel)]="checkOutDate" 
+              name="checkOutDate" 
+              [min]="checkOutMinDate" 
+              class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+          </div>
+
+          <!-- Rooms & Guests -->
+          <div class="w-full md:w-56">
+            <label class="block text-sm font-medium text-gray-700">Rooms & Guests</label>
+            <div class="relative">
+              <input 
+                type="text" 
+                [value]="rooms + ' Room' + (rooms > 1 ? 's' : '') + ', ' + adults + ' Adult' + (adults > 1 ? 's' : '') + (kids > 0 ? ', ' + kids + ' Kid' + (kids > 1 ? 's' : '') : '')" 
+                (click)="toggleGuestsDropdown()" 
+                readonly 
+                class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+              <!-- Dropdown for Rooms & Guests -->
+              <div *ngIf="showGuestsDropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 p-4">
+                <!-- Rooms -->
+                <div class="flex items-center mb-2">
+                  <label class="w-20">Rooms</label>
+                  <button type="button" (click)="updateRooms(-1)" class="px-2 py-1 border rounded">-</button>
+                  <span class="mx-2">{{ rooms }}</span>
+                  <button type="button" (click)="updateRooms(1)" class="px-2 py-1 border rounded">+</button>
+                </div>
+                <!-- Adults -->
+                <div class="flex items-center mb-2">
+                  <label class="w-20">Adults</label>
+                  <button type="button" (click)="updateAdults(-1)" class="px-2 py-1 border rounded">-</button>
+                  <span class="mx-2">{{ adults }}</span>
+                  <button type="button" (click)="updateAdults(1)" class="px-2 py-1 border rounded">+</button>
+                </div>
+                <!-- Kids -->
+                <div class="flex items-center mb-2">
+                  <label class="w-20">Kids</label>
+                  <button type="button" (click)="updateKids(-1)" class="px-2 py-1 border rounded">-</button>
+                  <span class="mx-2">{{ kids }}</span>
+                  <button type="button" (click)="updateKids(1)" class="px-2 py-1 border rounded">+</button>
+                </div>
+                <button type="button" (click)="toggleGuestsDropdown()" class="mt-2 w-full bg-blue-600 text-white p-1 rounded-md">Done</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Price Per Night Dropdown -->
+          <div class="w-full md:w-56">
+            <label class="block text-sm font-medium text-gray-700">Price Per Night</label>
+            <div class="relative">
+              <input 
+                type="text" 
+                [value]="selectedPricePerNight" 
+                (click)="togglePricePerNightDropdown()" 
+                readonly 
+                class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+              <!-- Dropdown for Price Per Night -->
+              <div *ngIf="showPricePerNightDropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 p-4">
+                <div 
+                  *ngFor="let pricePerNight of pricePerNightRanges" 
+                  (click)="selectPricePerNight(pricePerNight)" 
+                  class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  {{ pricePerNight }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Search Button -->
+        <div class="mt-6 w-full flex justify-center">
+          <button 
+            type="submit" 
+            (click)="onSearch()" 
+            class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700"
+          >
+            SEARCH
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>

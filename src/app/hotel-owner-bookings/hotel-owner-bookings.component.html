@@ -1,0 +1,82 @@
+<div class="min-h-screen bg-gray-100 p-6">
+  <h2 class="text-2xl font-bold text-blue-600 mb-4">Bookings & Payments</h2>
+
+  <!-- Filter Toggle -->
+  <div class="mb-4">
+    <button
+      (click)="toggleFilter()"
+      class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+    >
+      {{ showPaidOnly ? 'Show All Bookings' : 'Show Paid Only' }}
+    </button>
+  </div>
+
+  <!-- Bookings Table -->
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="p-2 text-left">Booking ID</th>
+          <th class="p-2 text-left">Customer Name</th>
+          <th class="p-2 text-left">Email</th>
+          <th class="p-2 text-left">Check-In</th>
+          <th class="p-2 text-left">Check-Out</th>
+          <th class="p-2 text-left">Total Price</th>
+          <th class="p-2 text-left">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let booking of filteredBookings"
+          (click)="showDetails(booking)"
+          class="cursor-pointer hover:bg-gray-100"
+        >
+          <td class="p-2 border-t">{{ booking.id }}</td>
+          <td class="p-2 border-t">{{ booking.customer?.fullName || 'N/A' }}</td>
+          <td class="p-2 border-t">{{ booking.customer?.email || 'N/A' }}</td>
+          <td class="p-2 border-t">{{ booking.checkInDate }}</td>
+          <td class="p-2 border-t">{{ booking.checkOutDate }}</td>
+          <td class="p-2 border-t">${{ booking.totalPrice }}</td>
+          <td class="p-2 border-t">
+            <span [ngClass]="{'text-green-600': getStatus(booking) === 'Paid', 'text-yellow-600': getStatus(booking) === 'Booked but Not Paid'}">
+              {{ getStatus(booking) }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="filteredBookings.length === 0">
+          <td colspan="7" class="p-2 text-center text-gray-600">No bookings match the current filter.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Popup for Details -->
+  <div *ngIf="selectedBooking" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+      <h3 class="text-xl font-bold text-blue-600 mb-4">Booking Details</h3>
+      <p><strong>Booking ID:</strong> {{ selectedBooking.id }}</p>
+      <p><strong>Customer Name:</strong> {{ selectedBooking.customer?.fullName || 'N/A' }}</p>
+      <p><strong>Email:</strong> {{ selectedBooking.customer?.email || 'N/A' }}</p>
+      <p><strong>Hotel ID:</strong> {{ selectedBooking.hotelId }}</p>
+      <p><strong>Check-In:</strong> {{ selectedBooking.checkInDate }}</p>
+      <p><strong>Check-Out:</strong> {{ selectedBooking.checkOutDate }}</p>
+      <p><strong>Guests:</strong> {{ selectedBooking.numberOfGuests }}</p>
+      <p><strong>Total Price:</strong> ${{ selectedBooking.totalPrice }}</p>
+      <p><strong>Special Request:</strong> {{ selectedBooking.specialRequest || 'None' }}</p>
+      <p><strong>Rooms:</strong> {{ getRoomIds(selectedBooking) }}</p>
+      <div *ngIf="selectedPayment" class="mt-4">
+        <h4 class="text-lg font-semibold text-gray-800 mb-2">Payment Details</h4>
+        <p><strong>Payment ID:</strong> {{ selectedPayment.id }}</p>
+        <p><strong>Amount:</strong> ${{ selectedPayment.amount }}</p>
+        <p><strong>Method:</strong> {{ selectedPayment.paymentMethod }}</p>
+        <p><strong>Date:</strong> {{ selectedPayment.createdAt }}</p>
+      </div>
+      <button
+        (click)="closePopup()"
+        class="mt-4 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>

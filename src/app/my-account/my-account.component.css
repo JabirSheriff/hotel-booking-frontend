@@ -1,0 +1,30 @@
+.container {
+    max-width: 1200px;
+  }
+  
+  /* Add a subtle shadow to the avatar for depth */
+  .avatar {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+  
+  .container {
+    max-width: 1200px;
+  }
+  
+  /* Add a subtle shadow to the avatar for depth */
+  .avatar {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Ensure the horizontal line is thin and light */
+hr {
+    border-top-width: 1px; /* Ensure it's thin */
+    border-color: #e5e7eb; /* Match Tailwind's border-gray-200 */
+  }
+
+  /* Optional: Ensure disabled input text is grayed out (browser default) */
+input:disabled {
+    color: #9ca3af; /* Match Tailwind's text-gray-400 */
+    -webkit-text-fill-color: #9ca3af; /* For Safari */
+    opacity: 1; /* Prevent browser from fading the input */
+  }

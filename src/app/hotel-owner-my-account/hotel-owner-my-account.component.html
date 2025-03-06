@@ -1,0 +1,163 @@
+<!-- Custom Navigation Bar for Hotel Owners -->
+<nav class="bg-[#003b95] h-[5rem] w-full fixed top-0 z-40" [ngClass]="{'blur-sm': isModalOpen}">
+    <div class="container mx-auto px-5 max-w-6xl h-full flex justify-between items-center">
+      <!-- Left: Logo -->
+      <div class="logo flex items-center">
+        <a routerLink="/hotel-owner-dashboard">
+          <img src="Bookr.com.png" alt="Bookr Logo" class="h-[12rem] w-auto object-contain" />
+        </a>
+      </div>
+  
+      <!-- User Dropdown -->
+      <div class="relative flex items-center space-x-2">
+        <!-- Avatar and Hi Message -->
+        <div class="flex items-center space-x-2">
+          <div class="avatar bg-white text-[#003b95] font-arial font-medium w-10 h-10 rounded-full flex items-center justify-center text-xl">
+            {{ userInitial }}
+          </div>
+          <span class="text-white text-lg">Hi, {{ userFullName }}!</span>
+        </div>
+  
+        <!-- Dropdown Toggle -->
+        <button (click)="toggleUserDropdown()" class="flex items-center">
+          <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+  
+        <!-- Dropdown Menu -->
+        <div *ngIf="showUserDropdown" class="absolute right-0 top-12 w-48 bg-white rounded-md shadow-lg z-10">
+          <a [routerLink]="['/hotel-owner-my-account']" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            My Account
+          </a>
+          <button (click)="logout()" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100 w-full text-left">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Extended Blue Background Section -->
+  <div class="bg-[#003b95] w-full pt-[6rem] min-h-[30rem]" [ngClass]="{'blur-sm': isModalOpen}">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <!-- Flex container for avatar and text -->
+      <div class="flex flex-col md:flex-row md:items-center py-6">
+        <!-- Enlarged Avatar (aligned with the logo) -->
+        <div class="avatar bg-white text-[#003b95] font-arial font-medium w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto md:mx-0 md:mr-6 mb-4 md:mb-0">
+          {{ userInitial }}
+        </div>
+  
+        <!-- Welcome Message and Quote -->
+        <div class="flex-1 text-center md:text-left">
+          <h1 class="text-4xl font-bold text-white mb-2">Welcome to Bookr, {{ userFullName }}!</h1>
+          <p class="text-xl text-gray-200 italic">“Stay. Relax. Repeat.”</p>
+        </div>
+      </div>
+  
+      <!-- Breadcrumb Navigation -->
+      <div class="py-4">
+        <nav class="text-lg">
+          <a routerLink="/hotel-owner-dashboard" class="text-gray-200 hover:underline">
+            Hotel Owner Dashboard
+          </a>
+          <span class="mx-2 text-gray-200">></span>
+          <span class="font-semibold text-white">My Account</span>
+        </nav>
+      </div>
+    </div>
+  </div>
+  
+  <!-- White Rectangle-Shaped Element -->
+  <div class="relative">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="bg-white rounded-2xl shadow-lg p-8 absolute left-1/2 transform -translate-x-1/2 -top-48 w-full max-w-5xl min-h-[32rem]">
+        <!-- User Details Section -->
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">My Account (Hotel Owner)</h2>
+          <div class="space-y-2">
+            <p><strong>Full Name:</strong> {{ userFullName || 'N/A' }}</p>
+            <p><strong>Email:</strong> {{ userEmail || 'N/A' }}</p>
+            <p><strong>Phone Number:</strong> {{ userPhoneNumber || 'N/A' }}</p>
+          </div>
+        </div>
+  
+        <!-- Update Profile Form -->
+        <div>
+          <h3 class="text-xl font-bold text-gray-800 mb-4">Update Profile</h3>
+          <form (ngSubmit)="updateProfile()" class="space-y-4">
+            <!-- Full Name -->
+            <div>
+              <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
+              <input
+                id="fullName"
+                type="text"
+                [(ngModel)]="fullName"
+                name="fullName"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
+  
+            <!-- Phone Number -->
+            <div>
+              <label for="phoneNumber" class="block text-sm font-medium text-gray-700">Phone Number</label>
+              <input
+                id="phoneNumber"
+                type="tel"
+                [(ngModel)]="phoneNumber"
+                name="phoneNumber"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your phone number"
+                required
+              />
+            </div>
+  
+            <!-- Password -->
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700">New Password (optional)</label>
+              <input
+                id="password"
+                type="password"
+                [(ngModel)]="password"
+                name="password"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter new password (leave blank to keep current)"
+              />
+            </div>
+  
+            <!-- Submit Button -->
+            <div>
+              <button
+                type="submit"
+                class="w-full bg-[#003b95] text-white font-arial font-medium py-2 px-4 rounded-full hover:bg-blue-800 transition duration-200"
+              >
+                Update Profile
+              </button>
+            </div>
+  
+            <!-- Success/Error Messages -->
+            <div *ngIf="updateMessage" class="mt-4 p-2 bg-green-100 text-green-800 rounded">
+              {{ updateMessage }}
+            </div>
+            <div *ngIf="updateError" class="mt-4 p-2 bg-red-100 text-red-800 rounded">
+              {{ updateError }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Spacer to ensure the white rectangle is visible below the blue section -->
+  <div class="h-64"></div>
+  
+  <!-- Auth Modals -->
+  <app-auth-modals (modalVisibilityChange)="onModalVisibilityChange($event)"></app-auth-modals>

@@ -1,0 +1,135 @@
+<div class="p-4">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-semibold text-gray-800">Manage Hotels</h2>
+      <button 
+        (click)="toggleAddHotelForm()" 
+        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+      >
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {{ showAddHotelForm ? 'Cancel' : 'Add Hotel' }}
+      </button>
+    </div>
+  
+    <p *ngIf="errorMessage" class="text-red-500 text-center mb-4">{{ errorMessage }}</p>
+  
+    <div *ngIf="showAddHotelForm" [@fadeIn] class="bg-white p-6 rounded-lg shadow-md mb-6 border-t-4 border-blue-600">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">Add New Hotel</h3>
+      <form (ngSubmit)="addHotel()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Hotel Name</label>
+          <input [(ngModel)]="newHotel.name" name="name" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Address</label>
+          <input [(ngModel)]="newHotel.address" name="address" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">City</label>
+          <input [(ngModel)]="newHotel.city" name="city" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Country</label>
+          <input [(ngModel)]="newHotel.country" name="country" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Star Rating (1-5)</label>
+          <input [(ngModel)]="newHotel.starRating" name="starRating" type="number" min="1" max="5" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Contact Email</label>
+          <input [(ngModel)]="newHotel.contactEmail" name="contactEmail" type="email" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Contact Phone</label>
+          <input [(ngModel)]="newHotel.contactPhone" name="contactPhone" type="tel" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700">Description</label>
+          <textarea [(ngModel)]="newHotel.description" name="description" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Active</label>
+          <input [(ngModel)]="newHotel.isActive" name="isActive" type="checkbox" class="h-5 w-5 text-blue-600 rounded" />
+        </div>
+        <div class="md:col-span-2 flex justify-end">
+          <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">Save Hotel</button>
+        </div>
+      </form>
+    </div>
+  
+    <div *ngIf="hotels.length === 0" class="text-gray-600 text-center">
+      No hotels found. Add your first hotel!
+    </div>
+    <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div *ngFor="let hotel of hotels" [@fadeIn] class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div (click)="viewHotelDetails(hotel)" class="cursor-pointer">
+          <img [src]="hotel.imageUrl" alt="{{ hotel.name }}" class="w-full h-48 object-cover"> <!-- Show image for all hotels -->
+          <div class="p-4">
+            <h3 class="text-lg font-semibold text-gray-800">{{ hotel.name }}</h3>
+            <p class="text-gray-600 text-sm">{{ hotel.address }}, {{ hotel.city }}, {{ hotel.country }}</p>
+            <p class="text-gray-500 text-sm mt-2">Rooms: {{ hotel.rooms.length }} | Rating: {{ hotel.starRating || 'N/A' }} ★</p>
+          </div>
+        </div>
+        <div *ngIf="selectedHotel === hotel" [@fadeIn] class="p-4 bg-gray-50 border-t">
+          <p class="text-gray-500 text-sm mt-2">{{ hotel.description || 'No description' }}</p>
+          <p class="text-gray-500 text-sm mt-1">Contact: {{ hotel.contactEmail || 'N/A' }} / {{ hotel.contactPhone || 'N/A' }}</p>
+          <p class="text-gray-500 text-sm mt-1">Status: {{ hotel.isActive ? 'Active' : 'Inactive' }}</p>
+          <div class="mt-2 flex gap-2" *ngIf="!hotel.isRandom">
+            <button (click)="goToRooms(hotel.id)" class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600">View Rooms</button>
+            <button (click)="toggleEditHotelPopup(hotel)" class="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600">Edit</button>
+            <button (click)="deleteHotel(hotel.id)" class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div *ngIf="showEditHotelPopup && editHotel" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div [@fadeIn] class="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Edit Hotel: {{ editHotel.name }}</h3>
+        <form (ngSubmit)="updateHotel()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Hotel Name</label>
+            <input [(ngModel)]="editHotel.name" name="name" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Address</label>
+            <input [(ngModel)]="editHotel.address" name="address" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">City</label>
+            <input [(ngModel)]="editHotel.city" name="city" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Country</label>
+            <input [(ngModel)]="editHotel.country" name="country" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Star Rating (1-5)</label>
+            <input [(ngModel)]="editHotel.starRating" name="starRating" type="number" min="1" max="5" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Contact Email</label>
+            <input [(ngModel)]="editHotel.contactEmail" name="contactEmail" type="email" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Contact Phone</label>
+            <input [(ngModel)]="editHotel.contactPhone" name="contactPhone" type="tel" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700">Description</label>
+            <textarea [(ngModel)]="editHotel.description" name="description" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Active</label>
+            <input [(ngModel)]="editHotel.isActive" name="isActive" type="checkbox" class="h-5 w-5 text-blue-600 rounded" />
+          </div>
+          <div class="md:col-span-2 flex justify-end gap-2">
+            <button type="button" (click)="toggleEditHotelPopup(editHotel)" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>

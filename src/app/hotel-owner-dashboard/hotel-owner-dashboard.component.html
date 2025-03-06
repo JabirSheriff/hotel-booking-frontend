@@ -1,0 +1,229 @@
+<!-- Custom Navigation Bar for Hotel Owners -->
+<nav class="bg-[#003b95] h-[5rem] w-full fixed top-0 z-40" [ngClass]="{'blur-sm': isModalOpen}">
+  <div class="container mx-auto px-5 max-w-6xl h-full flex justify-between items-center">
+    <!-- Left: Logo -->
+    <div class="logo flex items-center">
+      <a routerLink="/hotel-owner-dashboard">
+        <img src="Bookr.com.png" alt="Bookr Logo" class="h-[12rem] w-auto object-contain" />
+      </a>
+    </div>
+
+    <!-- User Dropdown -->
+    <div class="relative flex items-center space-x-2">
+      <!-- Avatar and Hi Message -->
+      <div class="flex items-center space-x-2">
+        <div class="avatar bg-white text-[#003b95] font-arial font-medium w-10 h-10 rounded-full flex items-center justify-center text-xl">
+          {{ userInitial }}
+        </div>
+        <span class="text-white text-lg">Hi, {{ userFullName }}!</span>
+      </div>
+
+      <!-- Dropdown Toggle -->
+      <button (click)="toggleUserDropdown()" class="flex items-center">
+        <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <!-- Dropdown Menu -->
+      <div *ngIf="showUserDropdown" class="absolute right-0 top-12 w-48 bg-white rounded-md shadow-lg z-10">
+        <a [routerLink]="['/hotel-owner-my-account']" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+          </svg>
+          My Account
+        </a>
+        <button (click)="logout()" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100 w-full text-left">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+          </svg>
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="pt-[6rem] min-h-screen bg-gray-100">
+  <div class="container mx-auto px-5 max-w-6xl py-8" [ngClass]="{'blur-sm': isModalOpen}">
+    <!-- My Hotels Heading and Search Bar -->
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">My Hotels</h2>
+      <div class="relative">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="filterHotels()"
+          placeholder="Search by hotel name or location"
+          class="pl-10 pr-4 py-2 w-[19rem] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Hotels List -->
+    <div class="space-y-6">
+      <!-- Loading Skeleton Cards -->
+<div *ngIf="isLoading" class="space-y-6">
+  <div *ngFor="let i of [1, 2, 3, 4, 5]" class="border rounded-lg p-4 flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 bg-white shadow-md animate-shimmer">
+    <!-- Left: Images -->
+    <div class="flex-shrink-0 w-full md:w-1/3">
+      <!-- Main Image Placeholder -->
+      <div class="w-full h-40 bg-gray-200 rounded-lg mb-2"></div>
+
+      <!-- Additional Images Placeholder -->
+      <div class="flex space-x-2">
+        <div *ngFor="let j of [1, 2, 3]" class="w-20 h-20 bg-gray-200 rounded-lg"></div>
+      </div>
+    </div>
+
+    <!-- Right: Hotel Details Placeholder -->
+    <div class="flex-1">
+      <!-- Hotel Name and Rating Placeholder -->
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <!-- Price Placeholder -->
+        <div class="text-right space-y-2">
+          <div class="h-4 bg-gray-200 rounded w-16"></div>
+          <div class="h-6 bg-gray-200 rounded w-20"></div>
+          <div class="h-4 bg-gray-200 rounded w-24"></div>
+          <div class="h-4 bg-gray-200 rounded w-16"></div>
+          <div class="h-5 bg-gray-200 rounded w-24"></div>
+        </div>
+      </div>
+
+      <!-- Location Placeholder -->
+      <div class="mt-2 h-4 bg-gray-200 rounded w-1/2"></div>
+
+      <!-- Amenities Placeholder -->
+      <div class="mt-2 space-y-2">
+        <div *ngFor="let k of [1, 2, 3]" class="h-4 bg-gray-200 rounded w-3/4"></div>
+      </div>
+
+      <!-- Review Summary Placeholder -->
+      <div class="mt-2 flex items-start">
+        <div class="w-5 h-5 bg-gray-200 rounded-full mr-2"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Actual Hotel Cards -->
+<div *ngIf="!isLoading" class="space-y-6">
+  <div *ngFor="let hotel of paginatedHotels" class="border rounded-lg p-4 flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 bg-white shadow-md">
+    <!-- Left: Images -->
+    <div class="flex-shrink-0 w-full md:w-1/3">
+      <!-- Main Image -->
+      <img [src]="getPrimaryImage(hotel)" alt="{{ hotel.name }}" (error)="onImageError($event)" class="w-full h-40 object-cover rounded-lg mb-2">
+
+      <!-- Additional Images -->
+      <div class="flex space-x-2">
+        <div *ngFor="let image of getAdditionalImages(hotel); let i = index" class="relative">
+          <img [src]="image.imageUrl" alt="{{ hotel.name }} - Image {{ i + 1 }}" (error)="onImageError($event)" class="w-20 h-20 object-cover rounded-lg">
+          <div *ngIf="i === 2" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg text-white text-sm font-semibold">
+            View All
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Hotel Details -->
+    <div class="flex-1">
+      <!-- Hotel Name and Rating -->
+      <div class="flex justify-between items-start">
+        <div>
+          <h3 class="text-xl font-bold text-gray-800">{{ hotel.name }}</h3>
+          <div class="flex items-center space-x-1">
+            <svg *ngFor="let star of getStarRatingArray(hotel.starRating)" class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.39 2.46a1 1 0 00-.364 1.118l1.287 3.971c.3.921-.755 1.688-1.539 1.118l-3.39-2.46a1 1 0 00-1.175 0l-3.39 2.46c-.783.57-1.838-.197-1.539-1.118l1.287-3.971a1 1 0 00-.364-1.118L2.236 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z" />
+            </svg>
+            <span class="text-blue-600 font-semibold ml-2">Very Good 4.2 (803 Ratings)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="mt-2 text-gray-600">
+        <span class="font-semibold">{{ hotel.city }}</span> | Near {{ hotel.city }} Central Area
+      </div>
+
+      <!-- Amenities -->
+      <div class="mt-2 space-y-1">
+        <div *ngFor="let amenity of hotel.amenities?.slice(0, 5)" class="flex items-center text-gray-600">
+          <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+          {{ amenity.name }}
+        </div>
+      </div>
+
+      <!-- Review Summary -->
+      <div class="mt-2 text-gray-600 flex items-start">
+        <svg class="w-5 h-5 text-purple-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+        </svg>
+        <span>Great location in {{ hotel.city }}, clean rooms, excellent service</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Hotels Message -->
+  <div *ngIf="!isLoading && filteredHotels.length === 0" class="text-center text-gray-600">
+    No hotels found matching your search. Try a different term!
+  </div>
+
+  <!-- Pagination Controls -->
+  <div *ngIf="!isLoading && filteredHotels.length > 0" class="flex justify-center items-center space-x-2 mt-6">
+    <!-- Previous Button -->
+    <button
+      (click)="previousPage()"
+      [disabled]="currentPage === 1"
+      class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:bg-gray-100 disabled:text-gray-400"
+    >
+      Previous
+    </button>
+
+    <!-- Page Numbers -->
+    <button
+      *ngFor="let page of getPageNumbers()"
+      (click)="goToPage(page)"
+      [class.bg-blue-600]="currentPage === page"
+      [class.text-white]="currentPage === page"
+      class="px-4 py-2 rounded-lg"
+      [ngClass]="currentPage === page ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'"
+    >
+      {{ page }}
+    </button>
+
+    <!-- Next Button -->
+    <button
+      (click)="nextPage()"
+      [disabled]="currentPage === totalPages"
+      class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:bg-gray-100 disabled:text-gray-400"
+    >
+      Next
+    </button>
+  </div>
+</div>
+
+  <!-- Go to Top Button -->
+  <button
+    (click)="scrollToTop()"
+    class="fixed bottom-6 right-6 bg-[#003b95] text-white p-4 rounded-full shadow-lg hover:bg-blue-800 transition duration-200 z-50"
+    title="Go to Top"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+    </svg>
+  </button>
+</div>
+
+<!-- Auth Modals -->
+<app-auth-modals (modalVisibilityChange)="onModalVisibilityChange($event)"></app-auth-modals>
