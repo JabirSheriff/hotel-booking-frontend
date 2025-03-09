@@ -18,6 +18,12 @@
           [alt]="hotel.name + ' Image'"
           class="w-full h-72 object-cover rounded-lg transition-opacity duration-500"
         >
+        <button (click)="prevImage()" class="absolute top-1/2 left-4 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75">
+          ◀ <!-- Left arrow -->
+        </button>
+        <button (click)="nextImage()" class="absolute top-1/2 right-4 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75">
+          ▶ <!-- Right arrow -->
+        </button>
         <span class="absolute top-3 left-3 bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded">MMT ValueStays</span>
       </div>
   
@@ -199,43 +205,30 @@
                       class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Any special requests (optional)"></textarea>
           </div>
+          <div *ngIf="errorMessage" class="text-red-500 text-sm mb-4">
+            {{ errorMessage }}
+          </div>
           <div class="flex justify-end space-x-2">
             <button type="button" (click)="closeBookingModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Book</button>
+            <button type="submit" [disabled]="bookingForm.invalid" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Book</button>
           </div>
         </form>
       </div>
     </div>
-    <!-- Payment Modal -->
-<div *ngIf="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white p-6 rounded-lg w-full max-w-md">
-      <h2 class="text-2xl font-bold mb-4">Booking Confirmation</h2>
-      <div *ngIf="bookedDetails" class="mb-4">
-        <p><strong>Booking ID:</strong> {{ bookedDetails.id }}</p>
-        <p><strong>Hotel ID:</strong> {{ bookedDetails.hotelId }}</p>
-        <p><strong>Check-In Date:</strong> {{ bookedDetails.checkInDate | date:'mediumDate' }}</p>
-        <p><strong>Check-Out Date:</strong> {{ bookedDetails.checkOutDate | date:'mediumDate' }}</p>
-        <p><strong>Number of Guests:</strong> {{ bookedDetails.numberOfGuests }}</p>
-        <p><strong>Total Price:</strong> ₹{{ bookedDetails.totalPrice | number:'1.0-0' }}</p>
-        <p><strong>Status:</strong> {{ bookedDetails.status === 'Pending' ? 'Confirmed' : bookedDetails.status }}</p>
-        <p *ngIf="bookedDetails.specialRequest"><strong>Special Request:</strong> {{ bookedDetails.specialRequest }}</p>
-      </div>
-      <div class="flex justify-end space-x-2">
-        <button (click)="closePaymentModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md">Cancel</button>
-        <button (click)="proceedToPayment()" class="bg-green-600 text-white px-4 py-2 rounded-md">Pay Now</button>
-      </div>
-    </div>
-    <!-- Payment Initiation Modal -->
+  
+    <!-- Payment Modal (Merged and Corrected) -->
     <div *ngIf="showPaymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
         <h3 class="text-lg font-semibold mb-4">Booking Confirmed</h3>
         <p class="text-gray-700 mb-4">Your booking has been created with status: <span class="font-medium">{{ bookedDetails?.status || 'Pending' }}</span>.</p>
         <div class="mb-4" *ngIf="bookedDetails && hotel">
+          <p><strong>Booking ID:</strong> {{ bookedDetails.id }}</p>
           <p><strong>Hotel:</strong> {{ hotel.name }}</p>
           <p><strong>Check-In:</strong> {{ bookedDetails.checkInDate | date:'mediumDate' }}</p>
           <p><strong>Check-Out:</strong> {{ bookedDetails.checkOutDate | date:'mediumDate' }}</p>
           <p><strong>Guests:</strong> {{ bookedDetails.numberOfGuests }}</p>
           <p><strong>Total Price:</strong> ₹{{ bookedDetails.totalPrice | number:'1.0-0' }}</p>
+          <p *ngIf="bookedDetails.specialRequest"><strong>Special Request:</strong> {{ bookedDetails.specialRequest }}</p>
         </div>
         <p class="text-gray-600 mb-4">Please proceed to payment within 1 minute, or the booking will be cancelled.</p>
         <div class="flex justify-end space-x-2">

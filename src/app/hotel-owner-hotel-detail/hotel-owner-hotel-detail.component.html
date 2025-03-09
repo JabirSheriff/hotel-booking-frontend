@@ -1,0 +1,202 @@
+<!-- Custom Navigation Bar (Same as Dashboard) -->
+<nav class="bg-[#003b95] h-[5rem] w-full fixed top-0 z-40" [ngClass]="{'blur-sm': showAddRoomModal || showEditRoomModal}">
+    <div class="container mx-auto px-5 max-w-6xl h-full flex justify-between items-center">
+      <div class="logo flex items-center">
+        <a routerLink="/hotel-owner-dashboard">
+          <img src="Bookr.com.png" alt="Bookr Logo" class="h-[12rem] w-auto object-contain" />
+        </a>
+      </div>
+      <div class="relative flex items-center space-x-2">
+        <div class="flex items-center space-x-2">
+          <div class="avatar bg-white text-[#003b95] font-arial font-medium w-10 h-10 rounded-full flex items-center justify-center text-xl">
+            {{ userInitial }}
+          </div>
+          <span class="text-white text-lg">Hi, {{ userFullName }}!</span>
+        </div>
+        <button (click)="toggleUserDropdown()" class="flex items-center">
+          <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div *ngIf="showUserDropdown" class="absolute right-0 top-12 w-[14rem] bg-white rounded-md shadow-lg z-10">
+          <a [routerLink]="['/hotel-owner-my-account']" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            My Account
+          </a>
+          <a [routerLink]="['/hotel-owner-dashboard/bookings']" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
+            Booking Management
+          </a>
+          <button (click)="logout()" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100 w-full text-left">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="pt-[6rem] min-h-screen bg-gray-100">
+    <div class="container mx-auto px-5 max-w-6xl py-8" [ngClass]="{'blur-sm': showAddRoomModal || showEditRoomModal}">
+      <!-- Hotel Details -->
+      <div *ngIf="hotel" class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ hotel.name }}</h1>
+  
+        <!-- Image Slideshow -->
+        <div class="relative mb-6">
+          <img [src]="getCurrentImage()" alt="{{ hotel.name }}" class="w-full h-96 object-cover rounded-lg">
+          <button (click)="prevImage()" [disabled]="currentImageIndex === 0" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button (click)="nextImage()" [disabled]="currentImageIndex === (hotel.images?.length || 0) - 1" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+  
+        <!-- Hotel Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <p class="text-gray-600"><strong>Location:</strong> {{ hotel.address }}, {{ hotel.city }}, {{ hotel.country }}</p>
+            <p class="text-gray-600"><strong>Star Rating:</strong> 
+              <span class="text-yellow-500">{{ hotelStarRating }}</span>
+            </p>
+            <p class="text-gray-600"><strong>Contact:</strong> {{ hotel.contactEmail }} | {{ hotel.contactPhone }}</p>
+            <p class="text-gray-600"><strong>Status:</strong> {{ hotel.isActive ? 'Active' : 'Inactive' }}</p>
+          </div>
+          <div>
+            <p class="text-gray-600"><strong>Description:</strong> {{ hotel.description }}</p>
+            <p class="text-gray-600"><strong>Amenities:</strong> {{ hotelAmenities }}</p>
+          </div>
+        </div>
+  
+        <!-- Rooms Section -->
+        <div class="mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Rooms</h2>
+            <button (click)="openAddRoomModal()" class="bg-[#003b95] text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition duration-200">Add Room</button>
+          </div>
+          <div *ngIf="hotel.rooms && hotel.rooms.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div *ngFor="let room of hotel.rooms" class="border rounded-lg p-4 bg-gray-50 shadow-sm">
+              <p><strong>Room Number:</strong> {{ room.roomNumber }}</p>
+              <p><strong>Type:</strong> {{ room.type }}</p>
+              <p><strong>Description:</strong> {{ room.description }}</p>
+              <p><strong>Price/Night:</strong> ${{ room.pricePerNight }}</p>
+              <p><strong>Capacity:</strong> {{ room.capacity }} guests</p>
+              <p><strong>Availability:</strong> {{ room.isAvailable ? 'Available' : 'Booked' }}</p>
+              <div class="mt-2 flex space-x-2">
+                <button (click)="openEditRoomModal(room)" class="bg-yellow-500 text-white px-3 py-1 rounded-lg hover:bg-yellow-600 transition duration-200">Edit</button>
+                <button (click)="deleteRoom(room.id)" class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition duration-200">Delete</button>
+              </div>
+            </div>
+          </div>
+          <p *ngIf="!hotel.rooms || hotel.rooms.length === 0" class="text-gray-600">No rooms available yet.</p>
+        </div>
+  
+        <!-- Customer Reviews -->
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Customer Reviews</h2>
+          <div *ngFor="let review of reviews" class="border-b py-4">
+            <div class="flex items-center mb-2">
+              <span class="font-semibold">{{ review.userName }}</span>
+              <span class="ml-2 text-yellow-500">{{ getReviewStars(review.rating) }}</span>
+              <span class="ml-2 text-gray-500 text-sm">{{ review.date }}</span>
+            </div>
+            <p class="text-gray-600">{{ review.comment }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Add Room Modal -->
+    <div *ngIf="showAddRoomModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Add New Room</h2>
+        <form (ngSubmit)="addRoom()">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-gray-700">Room Number *</label>
+              <input [(ngModel)]="addRoomForm.roomNumber" name="roomNumber" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label class="block text-gray-700">Type *</label>
+              <select [(ngModel)]="addRoomForm.type" name="type" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <option *ngFor="let type of roomTypes" [value]="type">{{ type }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-700">Description *</label>
+              <textarea [(ngModel)]="addRoomForm.description" name="description" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" required></textarea>
+            </div>
+            <div>
+              <label class="block text-gray-700">Price Per Night ($)*</label>
+              <input [(ngModel)]="addRoomForm.pricePerNight" name="pricePerNight" type="number" min="0" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label class="block text-gray-700">Capacity (1-10)*</label>
+              <input [(ngModel)]="addRoomForm.capacity" name="capacity" type="number" min="1" max="10" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label class="block text-gray-700">Is Available</label>
+              <input [(ngModel)]="addRoomForm.isAvailable" name="isAvailable" type="checkbox" class="h-5 w-5">
+            </div>
+          </div>
+          <div class="mt-6 flex justify-end space-x-4">
+            <button type="button" (click)="closeAddRoomModal()" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition duration-200">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-[#003b95] text-white rounded-lg hover:bg-blue-800 transition duration-200">Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  
+    <!-- Edit Room Modal -->
+    <div *ngIf="showEditRoomModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Edit Room</h2>
+        <form (ngSubmit)="updateRoom()">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-gray-700">Room Number *</label>
+              <input [(ngModel)]="editRoomForm.roomNumber" name="roomNumber" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label class="block text-gray-700">Type *</label>
+              <select [(ngModel)]="editRoomForm.type" name="type" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <option *ngFor="let type of roomTypes" [value]="type">{{ type }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-700">Description *</label>
+              <textarea [(ngModel)]="editRoomForm.description" name="description" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" required></textarea>
+            </div>
+            <div>
+              <label class="block text-gray-700">Price Per Night ($)*</label>
+              <input [(ngModel)]="editRoomForm.pricePerNight" name="pricePerNight" type="number" min="0" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label class="block text-gray-700">Capacity (1-10)*</label>
+              <input [(ngModel)]="editRoomForm.capacity" name="capacity" type="number" min="1" max="10" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label class="block text-gray-700">Is Available</label>
+              <input [(ngModel)]="editRoomForm.isAvailable" name="isAvailable" type="checkbox" class="h-5 w-5">
+            </div>
+          </div>
+          <div class="mt-6 flex justify-end space-x-4">
+            <button type="button" (click)="closeEditRoomModal()" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition duration-200">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-[#003b95] text-white rounded-lg hover:bg-blue-800 transition duration-200">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>

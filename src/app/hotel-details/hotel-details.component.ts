@@ -88,6 +88,7 @@ export class HotelDetailsComponent implements OnInit, OnDestroy {
       this.fetchHotelDetails(+hotelId);
       this.fetchReviews(+hotelId);
       this.fetchUnavailableDates(+hotelId);
+      // Removed startSlideshow() call
     } else {
       this.errorMessage = 'Invalid hotel ID.';
     }
@@ -142,7 +143,7 @@ export class HotelDetailsComponent implements OnInit, OnDestroy {
           const latitude = 20 + (Math.random() * 20 - 10);
           const longitude = 70 + (Math.random() * 20 - 10);
           this.hotel = { ...hotel, currentImageIndex: 0, latitude, longitude };
-          this.startSlideshow();
+          // this.startSlideshow();
         }
         this.isLoading = false;
       });
@@ -198,11 +199,23 @@ export class HotelDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
-  startSlideshow(): void {
-    if (this.hotel && this.hotel.images && this.hotel.images.length > 1) {
-      this.slideshowInterval = setInterval(() => {
-        this.hotel!.currentImageIndex = (this.hotel!.currentImageIndex! + 1) % this.hotel!.images.length;
-      }, 3000);
+  // startSlideshow(): void {
+  //   if (this.hotel && this.hotel.images && this.hotel.images.length > 1) {
+  //     this.slideshowInterval = setInterval(() => {
+  //       this.hotel!.currentImageIndex = (this.hotel!.currentImageIndex! + 1) % this.hotel!.images.length;
+  //     }, 3000);
+  //   }
+  // }
+
+  prevImage(): void {
+    if (this.hotel && this.hotel.images && this.hotel.images.length > 0) {
+      this.hotel.currentImageIndex = (this.hotel.currentImageIndex! - 1 + this.hotel.images.length) % this.hotel.images.length;
+    }
+  }
+
+  nextImage(): void {
+    if (this.hotel && this.hotel.images && this.hotel.images.length > 0) {
+      this.hotel.currentImageIndex = (this.hotel.currentImageIndex! + 1) % this.hotel.images.length;
     }
   }
 
@@ -227,20 +240,24 @@ export class HotelDetailsComponent implements OnInit, OnDestroy {
       const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
       const reviewData = {
         hotelId: this.hotel.id,
-        customerId: this.isAuthenticated ? this.customerId : null,
+        customerId: this.isAuthenticated ? this.getCustomerIdFromToken() : null,
         rating: this.reviewForm.value.rating,
         comment: this.reviewForm.value.comment
       };
       this.http.post<Review>('http://localhost:5280/api/reviews', reviewData, { headers }).subscribe({
         next: (newReview) => {
+          console.log('Review added:', newReview);
           this.reviews.push(newReview);
           this.reviewForm.reset({ rating: 0, comment: '' });
+          this.errorMessage = null;
         },
         error: (error) => {
           console.error('Error submitting review:', error);
-          this.errorMessage = `Failed to submit review. ${error.message || 'Please try again.'}`;
+          this.errorMessage = `Failed to submit review: ${error.statusText || 'Unknown error'}. Check console for details.`;
         }
       });
+    } else {
+      this.errorMessage = 'Form is invalid or hotel ID is missing.';
     }
   }
 
@@ -269,7 +286,7 @@ export class HotelDetailsComponent implements OnInit, OnDestroy {
       this.markFormGroupTouched(this.bookingForm);
       return;
     }
-
+  
     const formValue = this.bookingForm.value;
     const checkInDate = new Date(formValue.checkInDate || '');
     const checkOutDate = new Date(formValue.checkOutDate || '');
@@ -281,23 +298,17 @@ export class HotelDetailsComponent implements OnInit, OnDestroy {
       this.errorMessage = 'Check-out date must be after check-in date.';
       return;
     }
-
-    const isDateRangeAvailable = this.isDateRangeAvailable(checkInDate, checkOutDate);
-    if (!isDateRangeAvailable) {
-      this.errorMessage = 'Selected dates are not available. Please choose different dates.';
-      return;
-    }
-
+  
     if (this.hotel?.id) {
       const customerId = this.getCustomerIdFromToken();
       if (!customerId) {
         this.errorMessage = 'Unable to book: Customer ID not found in token.';
         return;
       }
-
+  
       const bookingData = {
         hotelId: this.hotel.id,
-        roomType: formValue.roomType,
+        roomType: formValue.roomType, // 0-2 maps to 1-3 in backend
         checkInDate: checkInDate.toISOString(),
         checkOutDate: checkOutDate.toISOString(),
         numberOfRooms: 1,
@@ -310,13 +321,23 @@ export class HotelDetailsComponent implements OnInit, OnDestroy {
           console.log('Booking Successful:', response);
           this.bookedDetails = response;
           this.showBookingModal = false;
-          this.showPaymentModal = true; // Show the payment modal with booking details
+          this.showPaymentModal = true;
           this.errorMessage = null;
           this.cdr.detectChanges();
         },
         error: (error) => {
-          console.error('Error creating booking:', error);
-          this.errorMessage = error.error?.message || error.message || 'Failed to create booking. Please try again.';
+          console.error('Booking Error:', error);
+          const backendMessage = error.error || error.message || 'Unknown error';
+          if (backendMessage.includes('No rooms of type')) {
+            this.errorMessage = backendMessage; // e.g., "No rooms of type 'StandardWithBalcony' exist for this hotel."
+          } else if (backendMessage.includes('Guest capacity')) {
+            this.errorMessage = backendMessage; // e.g., "Guest capacity (5) exceeds the limit for 'StandardWithBalcony' rooms (max 4)."
+          } else if (backendMessage.includes('No rooms available') || backendMessage.includes('Only')) {
+            this.errorMessage = backendMessage; // e.g., "No 'StandardWithBalcony' rooms available for selected dates."
+          } else {
+            this.errorMessage = `Failed to book: ${backendMessage}. Check console for details.`;
+          }
+          this.cdr.detectChanges();
         }
       });
     } else {

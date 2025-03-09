@@ -17,3 +17,45 @@
     background: linear-gradient(to right, #e5e7eb 8%, #d1d5db 18%, #e5e7eb 33%);
     background-size: 800px 104px;
   }
+
+  /* Existing styles remain unchanged, adding modal-specific styles */
+.max-h-\[90vh\] {
+    max-height: 90vh;
+  }
+  
+  .overflow-y-auto {
+    overflow-y: auto;
+  }
+  
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  
+  .h-24 {
+    height: 6rem;
+  }
+  
+  .absolute {
+    position: absolute;
+  }
+  
+  .top-2 {
+    top: 0.5rem;
+  }
+  
+  .left-2 {
+    left: 0.5rem;
+  }
+  
+  .left-6 {
+    left: 1.5rem;
+  }
+  
+  .bg-opacity-50 {
+    --tw-bg-opacity: 0.5;
+  }
+  
+  .px-1 {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }

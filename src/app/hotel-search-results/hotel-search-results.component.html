@@ -1,42 +1,15 @@
-<!-- src/app/landing-page/landing-page.component.html -->
+<!-- src/app/hotel-search-results/hotel-search-results.component.html -->
 <!-- Header -->
 <app-header [ngClass]="{'blur-sm': isModalOpen}"></app-header>
 
 <!-- Auth Modals -->
 <app-auth-modals (modalVisibilityChange)="onModalVisibilityChange($event)"></app-auth-modals>
 
-<!-- Extended Blue Background Section -->
-<div class="bg-[#003b95] w-full transition-all duration-500 ease-in-out" [ngClass]="{'pt-[15rem] min-h-[30rem]': !isTransitioning, 'pt-[5rem] min-h-[15rem]': isTransitioning, 'blur-sm': isModalOpen}">
+<!-- Shrunken Blue Background Section -->
+<div class="bg-[#003b95] w-full pt-[5rem] min-h-[15rem] transition-all duration-500 ease-in-out" [ngClass]="{'blur-sm': isModalOpen}">
   <div class="max-w-7xl mx-auto px-5 py-10 relative">
-    <!-- Smaller Rectangle for Cities -->
-    <div *ngIf="!isTransitioning" [@fadeOut]="isTransitioning ? 'out' : 'in'" class="bg-white rounded-2xl shadow-lg p-4 absolute left-0 right-0 mx-auto -top-8 w-full max-w-5xl flex justify-around items-center overflow-visible z-20">
-      <button 
-        *ngFor="let city of cities; let i = index" 
-        (click)="selectCity(i)" 
-        class="flex flex-col items-center space-y-1 relative z-10"
-        #cityButton
-      >
-        <img 
-          [src]="city.icon" 
-          [alt]="city.name + ' Icon'" 
-          class="h-12 w-12 object-contain city-icon z-10" 
-          (error)="onImageError($event, city.name)"
-          (load)="onImageLoad($event, city.name)"
-        >
-        <span class="text-sm font-medium text-gray-700 z-10">{{ city.name }}</span>
-        <div 
-          *ngIf="selectedCityIndex === i" 
-          class="absolute bottom-[-4px] left-0 h-1 bg-blue-600 transition-all duration-300 ease-in-out z-0"
-          [ngStyle]="{
-            'width': underlineWidth + 'px',
-            'transform': 'translateX(' + underlinePosition + 'px)'
-          }"
-        ></div>
-      </button>
-    </div>
-
     <!-- Main Search Form Rectangle -->
-    <div class="bg-white rounded-2xl shadow-lg p-4 relative z-10 transition-all duration-500 ease-in-out" [ngClass]="{'pt-16': !isTransitioning, 'pt-4': isTransitioning}">
+    <div class="bg-white rounded-2xl shadow-lg p-4 pt-4 relative z-10 transition-all duration-500 ease-in-out">
       <form class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4" (ngSubmit)="onSearch()">
         <div class="flex-1 w-full">
           <label class="block text-sm font-medium text-gray-700">Where Do you want to Stay?</label>
@@ -46,13 +19,11 @@
               [(ngModel)]="searchLocation" 
               name="searchLocation" 
               (input)="onLocationInput($event)" 
-              (focus)="onLocationFocus()" 
-              (blur)="hideLocationDropdown()"
               placeholder="Goa, India" 
               class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
-            <div *ngIf="showLocationDropdown && locationSuggestions.length > 0" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto">
+            <div *ngIf="locationSuggestions.length > 0" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
               <div 
                 *ngFor="let suggestion of locationSuggestions" 
                 (click)="selectLocation(suggestion)" 
@@ -146,89 +117,96 @@
           type="submit" 
           (click)="onSearch()" 
           class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700"
-          [disabled]="isLoading"
+          [disabled]="isHotelsLoading"
         >
-          {{ isLoading ? 'Searching...' : 'SEARCH' }}
+          {{ isHotelsLoading ? 'Searching...' : 'SEARCH' }}
         </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Skeleton Loader for Hotels -->
-<div *ngIf="isLoading" class="max-w-7xl mx-auto px-5 py-10">
-  <div class="grid grid-cols-1 gap-6">
-    <div *ngFor="let _ of [1, 2, 3]" class="bg-white rounded-lg shadow-md p-4 animate-pulse">
-      <div class="w-full h-48 bg-gray-300 rounded-t-md"></div>
-      <div class="mt-2 space-y-2">
-        <div class="h-4 bg-gray-300 rounded w-3/4"></div>
-        <div class="h-3 bg-gray-300 rounded w-1/2"></div>
-        <div class="space-y-1">
-          <div class="h-3 bg-gray-300 rounded w-2/3"></div>
-          <div class="h-3 bg-gray-300 rounded w-1/3"></div>
-        </div>
-        <div class="h-4 bg-gray-300 rounded w-1/4 mt-2"></div>
-      </div>
-      <div class="mt-2 flex justify-between items-center space-x-2">
-        <div class="space-x-2">
-          <div class="h-4 bg-gray-300 rounded w-1/3 inline-block"></div>
-          <div class="h-4 bg-gray-300 rounded w-1/4 inline-block"></div>
-        </div>
-        <div class="h-8 bg-gray-300 rounded w-20"></div>
-      </div>
-      <div class="mt-2 flex space-x-2">
-        <div *ngFor="let _ of [1, 2, 3]" class="w-12 h-12 bg-gray-300 rounded"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Offers Section (Single White Card with Tabs) -->
+<!-- Hotel Results Section -->
 <div class="max-w-7xl mx-auto px-5 py-10">
-  <div class="bg-gray-100 rounded-lg shadow-md p-6">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">OFFERS</h2>
-    <div class="flex justify-between items-center mb-6">
-      <div class="flex space-x-4 text-gray-700">
-        <button 
-          *ngFor="let tab of tabs; let i = index" 
-          (click)="selectTab(tab)" 
-          class="relative px-2 py-1 hover:bg-gray-200 rounded"
-          #tabButton
-        >
-          <span [class.font-bold]="selectedTab === tab">{{ tab }}</span>
-          <div 
-            *ngIf="selectedTab === tab" 
-            class="absolute bottom-0 left-0 h-1 bg-blue-600 transition-all duration-300 ease-in-out"
-            style="width: 100%;"
-          ></div>
-        </button>
-      </div>
-      <div class="flex space-x-4 items-center">
-        <button (click)="prevOffer()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300" [disabled]="currentOffset === 0">
-          <
-        </button>
-        <button (click)="nextOffer()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300" [disabled]="currentOffers.length <= 4 || currentOffset <= -((currentOffers.length - 4) * cardWidth)">
+  <!-- Loading Spinner for Hotels -->
+  <div *ngIf="isHotelsLoading" class="flex justify-center items-center">
+    <svg class="animate-spin h-10 w-10 text-blue-600" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+    </svg>
+  </div>
+
+  <!-- Hotel Cards -->
+  <div class="grid grid-cols-1 gap-6">
+    <ng-container *ngFor="let hotel of hotels">
+      <div *ngIf="!isCardLoading; else loadingSkeleton" class="bg-white rounded-lg shadow-md p-4 transform transition-all duration-500 ease-in-out animate-fade-in" (click)="goToDetails(hotel.id)" style="cursor: pointer;">
+        <div class="relative">
+          <img 
+            [src]="hotel.images[hotel.currentImageIndex!]?.imageUrl || 'https://via.placeholder.com/300x200'" 
+            [alt]="hotel.name + ' Image'" 
+            class="w-full h-48 object-cover rounded-t-md transition-opacity duration-500"
+            (error)="onImageError($event, hotel.name)"
+            (load)="onImageLoad($event, hotel.name)"
           >
-        </button>
-        <span class="text-blue-600 font-medium cursor-pointer">VIEW ALL <span class="text-xl">→</span></span>
-      </div>
-    </div>
-    <div class="relative overflow-hidden">
-      <div class="flex transition-transform duration-500 ease-in-out" [ngStyle]="{'transform': 'translateX(' + currentOffset + 'px)'}">
-        <div *ngFor="let i of getOfferChunks()" class="grid grid-cols-2 gap-4 min-w-[calc(400px*2.2)]">
-          <div *ngFor="let offer of currentOffers.slice(i * 4, (i + 1) * 4)" class="flex bg-white rounded-lg shadow-md p-4 w-[400px] h-48">
-            <img [src]="offer.image" alt="{{ offer.title }}" class="w-40 h-40 object-cover rounded-md mr-4">
-            <div class="flex-1 flex flex-col justify-between">
-              <div>
-                <div class="text-sm font-medium text-gray-500">{{ offer.bank }}</div>
-                <div class="text-lg font-bold">{{ offer.title }}</div>
-                <div class="text-sm text-gray-600">{{ offer.description }}</div>
+          <span class="absolute top-2 left-2 bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded">MMT ValueStays</span>
+        </div>
+        <div class="mt-2 flex justify-between items-start">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800">{{ hotel.name }} <span class="text-yellow-400">★★★★★</span></h3>
+            <div class="mt-1 text-sm text-gray-700">
+              <div *ngFor="let amenity of hotel.amenities | slice:0:3" class="flex items-center">
+                <span class="mr-1">✔</span> {{ amenity.name }}
               </div>
-              <button class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">{{ offer.buttonText }}</button>
+              <button class="text-blue-600 text-xs mt-1">View All</button>
             </div>
+            <p class="mt-1 text-sm text-gray-500">{{ hotel.description }}</p>
+          </div>
+          <div class="text-right">
+            <span class="text-gray-500 text-sm">Very Good <span class="text-black">{{ hotel.starRating }}</span> <span class="text-gray-500">({{ hotel.ratingCount }} Ratings)</span></span>
           </div>
         </div>
+        <div class="mt-2 flex justify-between items-center">
+          <div>
+            <span class="text-red-600 line-through text-sm">₹{{ hotel.originalPrice | number:'1.0-0' }}</span>
+            <span class="text-green-600 font-bold text-lg">₹{{ hotel.pricePerNight | number:'1.0-0' }}</span>
+            <span class="text-gray-500 text-xs">+ ₹547 taxes & fees</span>
+            <div class="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded mt-1 inline-block">Limited Time Sale</div>
+          </div>
+          <button class="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700">Book Now</button>
+        </div>
+        <div class="mt-2 flex space-x-2">
+          <img *ngFor="let image of hotel.images | slice:1:4" [src]="image.imageUrl || 'https://via.placeholder.com/50x50'" [alt]="hotel.name + ' Thumbnail'" class="w-12 h-12 object-cover rounded">
+        </div>
       </div>
-    </div>
+      <ng-template #loadingSkeleton>
+        <div class="bg-white rounded-lg shadow-md p-4 animate-pulse">
+          <div class="w-full h-48 bg-gray-300 rounded-t-md"></div>
+          <div class="mt-2 space-y-2">
+            <div class="h-4 bg-gray-300 rounded w-3/4"></div>
+            <div class="h-3 bg-gray-300 rounded w-1/2"></div>
+            <div class="space-y-1">
+              <div class="h-3 bg-gray-300 rounded w-2/3"></div>
+              <div class="h-3 bg-gray-300 rounded w-1/3"></div>
+            </div>
+            <div class="h-4 bg-gray-300 rounded w-1/4 mt-2"></div>
+          </div>
+          <div class="mt-2 flex justify-between items-center space-x-2">
+            <div class="space-x-2">
+              <div class="h-4 bg-gray-300 rounded w-1/3 inline-block"></div>
+              <div class="h-4 bg-gray-300 rounded w-1/4 inline-block"></div>
+            </div>
+            <div class="h-8 bg-gray-300 rounded w-20"></div>
+          </div>
+          <div class="mt-2 flex space-x-2">
+            <div *ngFor="let _ of [1,2,3]" class="w-12 h-12 bg-gray-300 rounded"></div>
+          </div>
+        </div>
+      </ng-template>
+    </ng-container>
+  </div>
+
+  <!-- No Results Message -->
+  <div *ngIf="!isHotelsLoading && hotels.length === 0" class="text-center text-gray-600">
+    No hotels found for your search criteria.
   </div>
 </div>

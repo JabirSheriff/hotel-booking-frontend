@@ -1,29 +1,44 @@
 import { Component, OnInit, AfterViewInit, ViewChildren, QueryList, ElementRef, OnDestroy } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { HeaderComponent } from '../header/header.component';
 import { AuthModalsComponent } from '../auth-modals/auth-modals.component';
+import { SearchService } from '../services/search.service';
 import { HotelDataService } from '../services/hotel-data.service';
-import { Hotel } from '../models/hotel'; // Import the shared interface
+import { Hotel } from '../models/hotel';
+import { trigger, state, style, animate, transition } from '@angular/animations';
+
+// Define an interface for Offer
+interface Offer {
+  bank: string;
+  title: string;
+  description: string;
+  image: string;
+  buttonText: string;
+}
 
 @Component({
   selector: 'app-landing-page',
   standalone: true,
   imports: [CommonModule, FormsModule, HeaderComponent, AuthModalsComponent],
   templateUrl: './landing-page.component.html',
-  styleUrls: ['./landing-page.component.css']
+  styleUrls: ['./landing-page.component.css'],
+  animations: [
+    trigger('fadeOut', [
+      state('in', style({ opacity: 1, transform: 'translateY(0)' })),
+      state('out', style({ opacity: 0, transform: 'translateY(-20px)' })),
+      transition('in => out', animate('500ms ease-in-out')),
+      transition('out => in', animate('500ms ease-in-out'))
+    ])
+  ]
 })
 export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
-  isContentLoading: boolean = true;
   isModalOpen: boolean = false;
+  isLoading: boolean = false;
+  isTransitioning: boolean = false;
   hotels: Hotel[] = [];
-  isHotelsLoading: boolean = false;
-  isCardLoading: boolean = false;
-  private slideshowIntervals: any[] = [];
-
   searchLocation: string = '';
   checkInDate: string = '';
   checkOutDate: string = '';
@@ -33,6 +48,8 @@ export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
   kids: number = 0;
   showGuestsDropdown: boolean = false;
   locationSuggestions: string[] = [];
+  showLocationDropdown: boolean = false;
+  allCities: string[] = [];
   today: string = '';
 
   cities = [
@@ -54,21 +71,89 @@ export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedPricePerNight: string = 'Any';
   showPricePerNightDropdown: boolean = false;
 
+  // Tabs and offers
+  tabs: string[] = ['ON 1st BOOKING', 'Hotels', 'Holidays', 'All Offers', 'Bank Offers'];
+  selectedTab: string = 'ON 1st BOOKING';
+  currentOffset: number = 0;
+  cardWidth: number = 400; // Wider cards (image + details side by side)
+
+  // Offer data for each tab (10+ offers per tab)
+  allOffers: { [key: string]: Offer[] } = {
+    'ON 1st BOOKING': [
+      { bank: 'AMEX', title: 'Grab FLAT 12% OFF* on Flights', description: 'with American Express Cards.', image: 'https://via.placeholder.com/150x150?text=Amex+1st+1', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: 'Interest-free EMI* + 35% OFF', description: 'on flights & hotels.', image: 'https://via.placeholder.com/150x150?text=Yes+1st+1', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '15% OFF on Next Trip!', description: 'on hotels & homestays.', image: 'https://via.placeholder.com/150x150?text=Amex+1st+2', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '25% OFF on Holidays', description: 'worldwide packages.', image: 'https://via.placeholder.com/150x150?text=Kotak+1st+1', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '#5L OFF on Flights', description: 'with EMI options.', image: 'https://via.placeholder.com/150x150?text=Bajaj+1st+1', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '10% OFF on Hotels', description: 'exclusive deal.', image: 'https://via.placeholder.com/150x150?text=Amex+1st+3', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '20% OFF Summer Sale', description: 'on holiday packages.', image: 'https://via.placeholder.com/150x150?text=Yes+1st+2', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '15% OFF on Flights', description: 'international deals.', image: 'https://via.placeholder.com/150x150?text=Kotak+1st+2', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '30% OFF on Stays', description: 'longer bookings.', image: 'https://via.placeholder.com/150x150?text=Bajaj+1st+2', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: 'Free Breakfast Deal', description: '10% OFF weekends.', image: 'https://via.placeholder.com/150x150?text=Amex+1st+4', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '40% OFF on Trains', description: 'special offer.', image: 'https://via.placeholder.com/150x150?text=Yes+1st+3', buttonText: 'Book Now' }
+    ],
+    'Hotels': [
+      { bank: 'AMEX', title: '20% OFF Hotel Stays', description: 'with Amex cards.', image: 'https://via.placeholder.com/150x150?text=Amex+Hotel+1', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '30% OFF Luxury Hotels', description: 'in India.', image: 'https://via.placeholder.com/150x150?text=Yes+Hotel+1', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '15% OFF Resorts', description: 'weekend getaways.', image: 'https://via.placeholder.com/150x150?text=Kotak+Hotel+1', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '25% OFF Budget Stays', description: 'EMI available.', image: 'https://via.placeholder.com/150x150?text=Bajaj+Hotel+1', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '10% OFF Suites', description: 'exclusive offer.', image: 'https://via.placeholder.com/150x150?text=Amex+Hotel+2', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: 'Free Upgrade', description: 'on hotel bookings.', image: 'https://via.placeholder.com/150x150?text=Yes+Hotel+2', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '20% OFF Spa Hotels', description: 'relax and save.', image: 'https://via.placeholder.com/150x150?text=Kotak+Hotel+2', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '35% OFF Family Stays', description: 'special deal.', image: 'https://via.placeholder.com/150x150?text=Bajaj+Hotel+2', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '15% OFF City Hotels', description: 'urban escapes.', image: 'https://via.placeholder.com/150x150?text=Amex+Hotel+3', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '25% OFF Beach Resorts', description: 'summer special.', image: 'https://via.placeholder.com/150x150?text=Yes+Hotel+3', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '10% OFF Inns', description: 'cozy stays.', image: 'https://via.placeholder.com/150x150?text=Kotak+Hotel+3', buttonText: 'Book Now' }
+    ],
+    'Holidays': [
+      { bank: 'AMEX', title: '30% OFF Holiday Packages', description: 'worldwide destinations.', image: 'https://via.placeholder.com/150x150?text=Amex+Holiday+1', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '25% OFF Beach Holidays', description: 'summer getaways.', image: 'https://via.placeholder.com/150x150?text=Yes+Holiday+1', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '20% OFF Mountain Trips', description: 'adventure awaits.', image: 'https://via.placeholder.com/150x150?text=Kotak+Holiday+1', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '15% OFF Family Holidays', description: 'EMI options available.', image: 'https://via.placeholder.com/150x150?text=Bajaj+Holiday+1', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '10% OFF Cruise Packages', description: 'luxury on the sea.', image: 'https://via.placeholder.com/150x150?text=Amex+Holiday+2', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '35% OFF Winter Holidays', description: 'snowy escapes.', image: 'https://via.placeholder.com/150x150?text=Yes+Holiday+2', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '40% OFF Cultural Tours', description: 'explore heritage.', image: 'https://via.placeholder.com/150x150?text=Kotak+Holiday+2', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '20% OFF Adventure Holidays', description: 'thrilling experiences.', image: 'https://via.placeholder.com/150x150?text=Bajaj+Holiday+2', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '25% OFF Safari Trips', description: 'wildlife adventures.', image: 'https://via.placeholder.com/150x150?text=Amex+Holiday+3', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '30% OFF City Breaks', description: 'urban holidays.', image: 'https://via.placeholder.com/150x150?text=Yes+Holiday+3', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '15% OFF Island Getaways', description: 'tropical paradise.', image: 'https://via.placeholder.com/150x150?text=Kotak+Holiday+3', buttonText: 'Book Now' }
+    ],
+    'All Offers': [
+      { bank: 'AMEX', title: '50% OFF All Trips', description: 'limited time.', image: 'https://via.placeholder.com/150x150?text=Amex+All+1', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '40% OFF Everything', description: 'travel deals.', image: 'https://via.placeholder.com/150x150?text=Yes+All+1', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '30% OFF All Bookings', description: 'flights & more.', image: 'https://via.placeholder.com/150x150?text=Kotak+All+1', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '20% OFF All Services', description: 'EMI options.', image: 'https://via.placeholder.com/150x150?text=Bajaj+All+1', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '15% OFF All Hotels', description: 'exclusive deal.', image: 'https://via.placeholder.com/150x150?text=Amex+All+2', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '25% OFF All Flights', description: 'worldwide.', image: 'https://via.placeholder.com/150x150?text=Yes+All+2', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '35% OFF All Packages', description: 'holiday deals.', image: 'https://via.placeholder.com/150x150?text=Kotak+All+2', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '10% OFF All Trips', description: 'special offer.', image: 'https://via.placeholder.com/150x150?text=Bajaj+All+2', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '20% OFF All Stays', description: 'hotel deals.', image: 'https://via.placeholder.com/150x150?text=Amex+All+3', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '30% OFF All Travel', description: 'global offers.', image: 'https://via.placeholder.com/150x150?text=Yes+All+3', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '15% OFF All Services', description: 'wide range.', image: 'https://via.placeholder.com/150x150?text=Kotak+All+3', buttonText: 'Book Now' }
+    ],
+    'Bank Offers': [
+      { bank: 'AMEX', title: '10% Cashback', description: 'on all cards.', image: 'https://via.placeholder.com/150x150?text=Amex+Bank+1', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '20% Cashback', description: 'on travel.', image: 'https://via.placeholder.com/150x150?text=Yes+Bank+1', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '15% Cashback', description: 'on bookings.', image: 'https://via.placeholder.com/150x150?text=Kotak+Bank+1', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '25% Cashback', description: 'with EMI.', image: 'https://via.placeholder.com/150x150?text=Bajaj+Bank+1', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '5% Cashback', description: 'on hotels.', image: 'https://via.placeholder.com/150x150?text=Amex+Bank+2', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '30% Cashback', description: 'on flights.', image: 'https://via.placeholder.com/150x150?text=Yes+Bank+2', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '10% Cashback', description: 'on packages.', image: 'https://via.placeholder.com/150x150?text=Kotak+Bank+2', buttonText: 'Book Now' },
+      { bank: 'BAJAJ FINSERV', title: '20% Cashback', description: 'on stays.', image: 'https://via.placeholder.com/150x150?text=Bajaj+Bank+2', buttonText: 'Book Now' },
+      { bank: 'AMEX', title: '15% Cashback', description: 'on travel.', image: 'https://via.placeholder.com/150x150?text=Amex+Bank+3', buttonText: 'View Details' },
+      { bank: 'YES BANK', title: '25% Cashback', description: 'on holidays.', image: 'https://via.placeholder.com/150x150?text=Yes+Bank+3', buttonText: 'Book Now' },
+      { bank: 'KOTAK BANK', title: '5% Cashback', description: 'on all.', image: 'https://via.placeholder.com/150x150?text=Kotak+Bank+3', buttonText: 'Book Now' }
+    ]
+  };
+
+  currentOffers: Offer[] = [];
+
   constructor(
-    private authService: AuthService,
-    private http: HttpClient,
     private router: Router,
+    private http: HttpClient,
+    private searchService: SearchService,
     private hotelDataService: HotelDataService
-  ) {
-    this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd) {
-        if (this.hotelDataService.getHotels().length > 0) {
-          this.hotels = [...this.hotelDataService.getHotels()];
-          this.startSlideshows();
-        }
-      }
-    });
-  }
+  ) {}
 
   ngOnInit(): void {
     const today = new Date();
@@ -76,16 +161,9 @@ export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
     this.checkInDate = new Date(today.setDate(today.getDate() + 1)).toISOString().split('T')[0];
     this.checkOutDate = new Date(today.setDate(today.getDate() + 8)).toISOString().split('T')[0];
     this.updateCheckOutMinDate();
-
-    const storedHotels = this.hotelDataService.getHotels();
-    if (storedHotels.length > 0) {
-      this.hotels = [...storedHotels];
-      this.startSlideshows();
-    }
-
-    setTimeout(() => {
-      this.isContentLoading = false;
-    }, 2000);
+    this.isTransitioning = false;
+    this.fetchAllCities();
+    this.selectTab(this.selectedTab); // Load initial offers
   }
 
   ngAfterViewInit(): void {
@@ -94,9 +172,7 @@ export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.selectedCityIndex !== null) this.updateUnderline();
   }
 
-  ngOnDestroy(): void {
-    this.slideshowIntervals.forEach(interval => clearInterval(interval));
-  }
+  ngOnDestroy(): void {}
 
   onModalVisibilityChange(isOpen: boolean): void {
     this.isModalOpen = isOpen;
@@ -149,19 +225,56 @@ export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
     if (newKids >= 0) this.kids = newKids;
   }
 
+  fetchAllCities(): void {
+    this.http.get<string[]>('http://localhost:5280/api/hotels/cities')
+      .subscribe({
+        next: (cities) => {
+          this.allCities = cities;
+          this.locationSuggestions = cities;
+        },
+        error: (error) => {
+          console.error('Error fetching cities:', error);
+          this.allCities = ['Fallback City 1', 'Fallback City 2'];
+          this.locationSuggestions = this.allCities;
+        }
+      });
+  }
+
+  onLocationFocus(): void {
+    this.showLocationDropdown = true;
+    this.locationSuggestions = this.allCities;
+  }
+
   onLocationInput(event: Event): void {
     const input = (event.target as HTMLInputElement).value;
-    if (input.length > 2) {
-      this.locationSuggestions = ['Goa, India', 'Mumbai, India', 'Delhi, India', 'Bengaluru, India']
-        .filter(suggestion => suggestion.toLowerCase().includes(input.toLowerCase()));
+    this.showLocationDropdown = true;
+
+    if (input.length > 0) {
+      this.http.get<string[]>(`http://localhost:5280/api/hotels/cities?q=${input}`)
+        .subscribe({
+          next: (cities) => {
+            this.locationSuggestions = cities;
+          },
+          error: (error) => {
+            console.error('Error filtering cities:', error);
+            this.locationSuggestions = [];
+          }
+        });
     } else {
-      this.locationSuggestions = [];
+      this.locationSuggestions = this.allCities;
     }
   }
 
   selectLocation(suggestion: string): void {
     this.searchLocation = suggestion;
-    this.locationSuggestions = [];
+    this.showLocationDropdown = false;
+    this.locationSuggestions = this.allCities;
+  }
+
+  hideLocationDropdown(): void {
+    setTimeout(() => {
+      this.showLocationDropdown = false;
+    }, 200);
   }
 
   selectCity(index: number): void {
@@ -181,9 +294,7 @@ export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onSearch(): void {
-    this.isHotelsLoading = true;
-    this.hotels = [];
-    this.isCardLoading = true;
+    this.isLoading = true;
     let params = new HttpParams();
 
     if (this.searchLocation) params = params.set('searchTerm', this.searchLocation);
@@ -195,43 +306,40 @@ export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
     const maxPrice = this.selectedPricePerNight === 'Any' ? null : this.getPricePerNightValue(this.selectedPricePerNight, 'max');
     if (maxPrice !== null) params = params.set('maxPrice', maxPrice.toString());
 
-    console.log('Search Params:', {
-      searchTerm: this.searchLocation,
-      checkInDate: this.checkInDate,
-      checkOutDate: this.checkOutDate,
-      numberOfGuests: this.adults + this.kids,
-      numberOfRooms: this.rooms,
-      maxPrice
-    });
-
     this.http.get<Hotel[]>('http://localhost:5280/api/hotels/search', { params })
       .subscribe({
         next: (hotels) => {
-          this.hotels = hotels.map(hotel => {
-            const primaryImage = hotel.images.find(img => img.isPrimary)?.imageUrl || 'https://via.placeholder.com/300x200';
-            const lowestPrice = Math.min(...hotel.rooms.map(room => room.pricePerNight));
-            return {
-              ...hotel,
-              imageUrl: primaryImage,
-              location: `${hotel.city}, ${hotel.country}`,
-              pricePerNight: lowestPrice,
-              originalPrice: lowestPrice * 1.5,
-              rating: 4.2,
-              ratingCount: 803,
-              description: hotel.description || 'Conveniently located near key landmarks, clean rooms, tasty food',
-              currentImageIndex: 0
-            };
-          });
-          this.hotelDataService.setHotels(this.hotels);
-          this.isHotelsLoading = false;
-          this.isCardLoading = false;
-          this.startSlideshows();
-          console.log('Hotels found:', this.hotels);
+          this.hotels = hotels.map(hotel => ({
+            ...hotel,
+            imageUrl: hotel.images.find(img => img.isPrimary)?.imageUrl || 'https://via.placeholder.com/300x200',
+            location: `${hotel.city}, ${hotel.country}`,
+            pricePerNight: Math.min(...hotel.rooms.map(room => room.pricePerNight)),
+            originalPrice: Math.min(...hotel.rooms.map(room => room.pricePerNight)) * 1.5,
+            rating: 4.2,
+            ratingCount: 803,
+            description: hotel.description || 'Conveniently located near key landmarks, clean rooms, tasty food',
+            currentImageIndex: 0
+          }));
+          this.isLoading = false;
+          this.isTransitioning = true;
+          setTimeout(() => {
+            this.hotelDataService.setHotels(this.hotels);
+            this.searchService.setSearchParams({
+              searchLocation: this.searchLocation,
+              checkInDate: this.checkInDate,
+              checkOutDate: this.checkOutDate,
+              rooms: this.rooms,
+              adults: this.adults,
+              kids: this.kids,
+              selectedPricePerNight: this.selectedPricePerNight
+            });
+            this.router.navigate(['/search']);
+          }, 500);
         },
         error: (error) => {
           console.error('Error searching hotels:', error);
-          this.isHotelsLoading = false;
-          this.isCardLoading = false;
+          this.isLoading = false;
+          alert('Failed to load hotels. Please try again.');
         }
       });
   }
@@ -246,21 +354,6 @@ export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  goToDetails(hotelId: number): void {
-    window.open(`/hotel/${hotelId}`, '_blank');
-  }
-
-  private startSlideshows(): void {
-    this.slideshowIntervals.forEach(interval => clearInterval(interval));
-    this.slideshowIntervals = [];
-    this.hotels.forEach(hotel => {
-      const interval = setInterval(() => {
-        hotel.currentImageIndex = (hotel.currentImageIndex! + 1) % hotel.images.length;
-      }, 3000);
-      this.slideshowIntervals.push(interval);
-    });
-  }
-
   onImageError(event: Event, name: string): void {
     console.error(`Failed to load image for ${name}:`, (event.target as HTMLImageElement).src);
     (event.target as HTMLImageElement).src = 'https://via.placeholder.com/300x200';
@@ -268,5 +361,34 @@ export class LandingPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onImageLoad(event: Event, name: string): void {
     console.log(`Successfully loaded image for ${name}:`, (event.target as HTMLImageElement).src);
+  }
+
+  // Tab and carousel methods
+  selectTab(tab: string): void {
+    this.selectedTab = tab;
+    this.currentOffers = this.allOffers[tab] || [];
+    this.currentOffset = 0; // Reset offset when switching tabs
+  }
+
+  nextOffer(): void {
+    const visibleCards = 4; // 2 rows x 2 columns
+    const totalOffers = this.currentOffers.length;
+    if (totalOffers <= visibleCards) return; // No need to slide if all offers are visible
+    const maxOffset = -((totalOffers - visibleCards) * this.cardWidth);
+    if (this.currentOffset > maxOffset) {
+      this.currentOffset -= this.cardWidth * 2; // Move 2 cards at a time (1 set of 2 columns)
+    }
+  }
+
+  prevOffer(): void {
+    if (this.currentOffset < 0) {
+      this.currentOffset += this.cardWidth * 2; // Move 2 cards back
+    }
+  }
+
+  getOfferChunks(): number[] {
+    const totalOffers = this.currentOffers.length;
+    const chunks = Math.ceil(totalOffers / 4); // Each chunk is 4 cards (2 rows x 2 columns)
+    return Array.from({ length: chunks }, (_, i) => i);
   }
 }

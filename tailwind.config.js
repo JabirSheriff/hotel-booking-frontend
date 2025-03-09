@@ -14,9 +14,9 @@ module.exports = {
         },
       },
       colors: {
-        upcoming: '#72cecd', // Teal/cyan for Upcoming Trips
-        cancelled: '#f0af2f', // Yellow/orange for Cancelled
-        completed: '#bdbec3', // Light gray for Completed
+        upcoming: '#72cecd',
+        cancelled: '#bdbec3',
+        completed: '#77c1ff', 
       },
     },
     fontFamily: {

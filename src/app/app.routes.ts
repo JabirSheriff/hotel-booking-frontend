@@ -17,18 +17,22 @@ import { HotelOwnerMyAccountComponent } from './hotel-owner-my-account/hotel-own
 import { AdminMyAccountComponent } from './admin-my-account/admin-my-account.component'; // Add this
 import { AdminUserManagementComponent } from './admin-user-management/admin-user-management.component';
 import { HotelDetailsComponent } from './hotel-details/hotel-details.component';
+import { HotelOwnerHotelDetailComponent } from './hotel-owner-hotel-detail/hotel-owner-hotel-detail.component';
+import { HotelSearchResultsComponent } from './hotel-search-results/hotel-search-results.component';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },
+  { path: 'search', component: HotelSearchResultsComponent },
   { path: 'login', component: LoginComponent },
   {path: 'user-management',component:AdminUserManagementComponent, canActivate: [AuthGuard]},
-  { path: 'hotel/:id', component: HotelDetailsComponent },
+  { path: 'hotel-details/:id', component: HotelDetailsComponent },
   { path: 'customer-dashboard', component: CustomerDashboardComponent, canActivate: [AuthGuard] },
   { path: 'my-account', component: MyAccountComponent, canActivate: [AuthGuard] },
   { path: 'my-bookings', component: MyBookingsComponent, canActivate: [AuthGuard] },
   { path: 'hotel-owner-dashboard', component: HotelOwnerDashboardComponent, canActivate: [AuthGuard] },
   { path: 'hotel-owner-my-account', component: HotelOwnerMyAccountComponent, canActivate: [AuthGuard] },
   { path: 'hotel-owner-dashboard/rooms/:hotelId', component: RoomListComponent },
+  { path: 'hotel-owner-hotel-detail/:hotelId', component: HotelOwnerHotelDetailComponent },
   { path: 'hotel-owner-dashboard/bookings', component: HotelOwnerBookingsComponent },
   { path: 'admin-dashboard', component: AdminDashboardComponent, canActivate: [AuthGuard] },
   { path: 'admin-my-account', component: AdminMyAccountComponent, canActivate: [AuthGuard] }, // Update this
