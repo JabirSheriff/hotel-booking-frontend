@@ -1,0 +1,247 @@
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-center">
+      <p class="text-gray-500 text-lg">Loading hotel details...</p>
+    </div>
+  
+    <!-- Error State -->
+    <div *ngIf="errorMessage && !isLoading" class="text-center text-red-500 mt-6">
+      <p class="text-lg">{{ errorMessage }}</p>
+    </div>
+  
+    <!-- Hotel Details -->
+    <div *ngIf="hotel && !isLoading" class="bg-white rounded-lg shadow-lg p-6">
+      <!-- Slideshow -->
+      <div class="relative mb-6">
+        <img
+          [src]="hotel.images[hotel.currentImageIndex ?? 0]?.imageUrl ?? 'https://via.placeholder.com/300x200'"
+          [alt]="hotel.name + ' Image'"
+          class="w-full h-72 object-cover rounded-lg transition-opacity duration-500"
+        >
+        <span class="absolute top-3 left-3 bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded">MMT ValueStays</span>
+      </div>
+  
+      <!-- Hotel Info -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ hotel.name }} <span class="text-yellow-400">{{ '★'.repeat(hotel.starRating ?? 0) }}</span></h1>
+        <p class="text-lg text-gray-600">{{ hotel.address }}, {{ hotel.city }}, {{ hotel.country }}</p>
+        <p class="text-md text-gray-600 mt-1">Contact: {{ hotel.contactEmail ?? 'N/A' }} | {{ hotel.contactPhone ?? 'N/A' }}</p>
+        <div class="mt-4 text-md text-gray-700">
+          <div *ngFor="let amenity of hotel.amenities" class="flex items-center mb-2">
+            <span class="mr-2 text-green-500">✔</span> {{ amenity.name }}
+          </div>
+          <div *ngIf="!hotel.amenities?.length" class="text-gray-500">
+            No amenities available.
+          </div>
+        </div>
+        <p class="mt-4 text-md text-gray-500">{{ hotel.description ?? 'No description available.' }}</p>
+        <div class="mt-4 text-right">
+          <span class="text-gray-500 text-md">Very Good <span class="text-black font-medium">{{ hotel.starRating ?? 0 }}</span> <span class="text-gray-500">(1000 Ratings)</span></span>
+        </div>
+      </div>
+  
+      <!-- Room Options -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Rooms</h2>
+        <div *ngIf="hotel.rooms.length === 0" class="text-gray-500 text-md mb-4">
+          <p>No rooms available for this hotel.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div *ngFor="let room of hotel.rooms" class="border border-gray-200 p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="text-lg font-medium mb-2">{{ getRoomTypeName(room.type) }}</h3>
+            <p class="text-md text-gray-600 mb-2">Capacity: {{ room.capacity ?? 'N/A' }} | {{ room.description ?? 'No description available.' }}</p>
+            <p class="text-green-600 font-bold text-xl mb-2">₹{{ (room.pricePerNight ?? 0) | number:'1.0-0' }} <span class="text-gray-500 text-md">per night</span></p>
+            <p class="text-md" [ngClass]="{'text-green-600': room.isAvailable, 'text-red-600': !room.isAvailable}">
+              Status: {{ room.isAvailable ? 'Available' : 'Not Available' }}
+            </p>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Map -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Location</h2>
+        <div class="w-full h-80 rounded-lg overflow-hidden">
+          <img
+            src="location.png"
+            alt="{{ hotel.name }} Location Map"
+            class="w-full h-full object-cover"
+          >
+          <div class="mt-2 text-gray-500 text-md text-center">
+            Approx. {{ hotel.latitude?.toFixed(2) ?? 'N/A' }}, {{ hotel.longitude?.toFixed(2) ?? 'N/A' }}
+          </div>
+        </div>
+      </div>
+  
+      <!-- Reviews Section -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4 flex items-center">
+          Reviews
+          <span class="ml-2 text-yellow-400 text-lg">{{ getAverageRating() | number:'1.1-1' }}/5 ({{ reviews.length }} reviews)</span>
+        </h2>
+        <div class="space-y-6">
+          <div *ngFor="let review of reviews" class="bg-gray-50 p-4 rounded-lg shadow-md flex items-start">
+            <div class="w-10 h-10 rounded-full mr-4 flex items-center justify-center text-white text-lg font-medium" [style.backgroundColor]="getAvatarColor(review.customerName)">
+              {{ getInitials(review.customerName) }}
+            </div>
+            <div class="flex-1">
+              <div class="flex justify-between items-center">
+                <h3 class="text-md font-medium text-gray-800">{{ review.customerName }}</h3>
+                <span class="text-yellow-400 text-sm">{{ '★'.repeat(review.rating) }}</span>
+              </div>
+              <p class="text-gray-600 text-sm mt-1">{{ review.comment }}</p>
+              <p class="text-gray-500 text-xs mt-1">{{ review.createdAt | date:'medium' }}</p>
+            </div>
+          </div>
+          <div *ngIf="reviews.length === 0" class="text-gray-500 text-center py-4">
+            No reviews yet. Be the first to share your experience!
+          </div>
+        </div>
+  
+        <!-- Add Review Form -->
+        <div class="mt-6 p-4 bg-white rounded-lg shadow-md">
+          <h3 class="text-lg font-semibold mb-4">Add Your Review</h3>
+          <form [formGroup]="reviewForm" (ngSubmit)="onSubmitReview()" class="space-y-4">
+            <div>
+              <label for="rating" class="block text-sm font-medium text-gray-700">Rating</label>
+              <select id="rating" formControlName="rating" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                <option value="0" disabled>Select Rating</option>
+                <option *ngFor="let i of [1, 2, 3, 4, 5]" [value]="i">{{ i }} Star{{ i > 1 ? 's' : '' }}</option>
+              </select>
+              <div *ngIf="reviewForm.get('rating')?.touched && reviewForm.get('rating')?.invalid" class="text-red-500 text-sm mt-1">
+                Please select a rating between 1 and 5.
+              </div>
+            </div>
+            <div>
+              <label for="comment" class="block text-sm font-medium text-gray-700">Comment</label>
+              <textarea id="comment" formControlName="comment" rows="4" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Share your experience..."></textarea>
+              <div *ngIf="reviewForm.get('comment')?.touched && reviewForm.get('comment')?.invalid" class="text-red-500 text-sm mt-1">
+                Comment is required and must not exceed 500 characters.
+              </div>
+            </div>
+            <button type="submit" [disabled]="reviewForm.invalid" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors">
+              Submit Review
+            </button>
+            <p class="text-sm text-gray-500 mt-2" *ngIf="!isAuthenticated">Note: Reviews submitted without login will be anonymous.</p>
+          </form>
+        </div>
+      </div>
+  
+      <!-- Similar Properties -->
+      <div>
+        <h2 class="text-2xl font-semibold mb-4">Similar Properties</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div *ngFor="let _ of [1, 2, 3]" class="border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <img [src]="hotel.images[_ % hotel.images.length]?.imageUrl ?? 'https://via.placeholder.com/100x100'"
+                 alt="Similar Hotel"
+                 class="w-full h-32 object-cover rounded-t-lg mb-2">
+            <h3 class="text-lg font-medium mb-2">Similar Hotel {{ _ }}</h3>
+            <p class="text-green-600 font-bold text-md mb-2">₹2,500</p>
+            <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">View</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Floating Book Now Button -->
+    <button class="fixed bottom-6 right-6 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-10"
+            (click)="bookNow()"
+            *ngIf="hotel && !isLoading">
+      Book Now
+    </button>
+  
+    <!-- Booking Modal -->
+    <div *ngIf="showBookingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-semibold mb-4">Book Your Stay</h3>
+        <form [formGroup]="bookingForm" (ngSubmit)="onSubmitBooking()" class="space-y-4">
+          <div>
+            <label for="checkInDate" class="block text-sm font-medium text-gray-700">Check-In Date</label>
+            <input type="date" id="checkInDate" formControlName="checkInDate"
+                   [min]="minCheckInDate"
+                   class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            <div *ngIf="bookingForm.get('checkInDate')?.touched && bookingForm.get('checkInDate')?.invalid" class="text-red-500 text-sm mt-1">
+              <span *ngIf="bookingForm.get('checkInDate')?.errors?.['required']">Check-in date is required.</span>
+            </div>
+          </div>
+          <div>
+            <label for="checkOutDate" class="block text-sm font-medium text-gray-700">Check-Out Date</label>
+            <input type="date" id="checkOutDate" formControlName="checkOutDate"
+                   [min]="minCheckOutDate"
+                   class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            <div *ngIf="bookingForm.get('checkOutDate')?.touched && bookingForm.get('checkOutDate')?.invalid" class="text-red-500 text-sm mt-1">
+              <span *ngIf="bookingForm.get('checkOutDate')?.errors?.['required']">Check-out date is required.</span>
+            </div>
+          </div>
+          <div>
+            <label for="numberOfGuests" class="block text-sm font-medium text-gray-700">Number of Guests</label>
+            <input type="number" id="numberOfGuests" formControlName="numberOfGuests" min="1" max="10"
+                   class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            <div *ngIf="bookingForm.get('numberOfGuests')?.touched && bookingForm.get('numberOfGuests')?.invalid" class="text-red-500 text-sm mt-1">
+              <span *ngIf="bookingForm.get('numberOfGuests')?.errors?.['required']">Number of guests is required.</span>
+              <span *ngIf="bookingForm.get('numberOfGuests')?.errors?.['min'] || bookingForm.get('numberOfGuests')?.errors?.['max']">
+                Please enter a number between 1 and 10.
+              </span>
+            </div>
+          </div>
+          <div>
+            <label for="roomType" class="block text-sm font-medium text-gray-700">Room Type</label>
+            <select id="roomType" formControlName="roomType" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+              <option *ngFor="let type of roomTypes" [value]="type.value">{{ type.label }}</option>
+            </select>
+            <div *ngIf="bookingForm.get('roomType')?.touched && bookingForm.get('roomType')?.invalid" class="text-red-500 text-sm mt-1">
+              <span *ngIf="bookingForm.get('roomType')?.errors?.['required']">Room type is required.</span>
+            </div>
+          </div>
+          <div>
+            <label for="specialRequest" class="block text-sm font-medium text-gray-700">Special Requests</label>
+            <textarea id="specialRequest" formControlName="specialRequest" rows="3"
+                      class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Any special requests (optional)"></textarea>
+          </div>
+          <div class="flex justify-end space-x-2">
+            <button type="button" (click)="closeBookingModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Book</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- Payment Modal -->
+<div *ngIf="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg w-full max-w-md">
+      <h2 class="text-2xl font-bold mb-4">Booking Confirmation</h2>
+      <div *ngIf="bookedDetails" class="mb-4">
+        <p><strong>Booking ID:</strong> {{ bookedDetails.id }}</p>
+        <p><strong>Hotel ID:</strong> {{ bookedDetails.hotelId }}</p>
+        <p><strong>Check-In Date:</strong> {{ bookedDetails.checkInDate | date:'mediumDate' }}</p>
+        <p><strong>Check-Out Date:</strong> {{ bookedDetails.checkOutDate | date:'mediumDate' }}</p>
+        <p><strong>Number of Guests:</strong> {{ bookedDetails.numberOfGuests }}</p>
+        <p><strong>Total Price:</strong> ₹{{ bookedDetails.totalPrice | number:'1.0-0' }}</p>
+        <p><strong>Status:</strong> {{ bookedDetails.status === 'Pending' ? 'Confirmed' : bookedDetails.status }}</p>
+        <p *ngIf="bookedDetails.specialRequest"><strong>Special Request:</strong> {{ bookedDetails.specialRequest }}</p>
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button (click)="closePaymentModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md">Cancel</button>
+        <button (click)="proceedToPayment()" class="bg-green-600 text-white px-4 py-2 rounded-md">Pay Now</button>
+      </div>
+    </div>
+    <!-- Payment Initiation Modal -->
+    <div *ngIf="showPaymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-semibold mb-4">Booking Confirmed</h3>
+        <p class="text-gray-700 mb-4">Your booking has been created with status: <span class="font-medium">{{ bookedDetails?.status || 'Pending' }}</span>.</p>
+        <div class="mb-4" *ngIf="bookedDetails && hotel">
+          <p><strong>Hotel:</strong> {{ hotel.name }}</p>
+          <p><strong>Check-In:</strong> {{ bookedDetails.checkInDate | date:'mediumDate' }}</p>
+          <p><strong>Check-Out:</strong> {{ bookedDetails.checkOutDate | date:'mediumDate' }}</p>
+          <p><strong>Guests:</strong> {{ bookedDetails.numberOfGuests }}</p>
+          <p><strong>Total Price:</strong> ₹{{ bookedDetails.totalPrice | number:'1.0-0' }}</p>
+        </div>
+        <p class="text-gray-600 mb-4">Please proceed to payment within 1 minute, or the booking will be cancelled.</p>
+        <div class="flex justify-end space-x-2">
+          <button (click)="closePaymentModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+          <button (click)="proceedToPayment()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Proceed to Payment</button>
+        </div>
+      </div>
+    </div>
+  </div>

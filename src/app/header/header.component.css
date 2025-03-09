@@ -39,6 +39,7 @@
   }
   
   /* Ensure the property nav doesn’t mess with the main nav */
-  nav {
+  /* nav {
     margin-top: 2rem; /* Space below property nav */
-  }
+    
+  

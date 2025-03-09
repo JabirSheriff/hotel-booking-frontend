@@ -1,115 +1,170 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { HotelService } from '../services/hotel.service';
-import { forkJoin } from 'rxjs';
-
-interface Booking {
-  id: number;
-  hotelId: number;
-  customerId: number;
-  checkInDate: string;
-  checkOutDate: string;
-  numberOfGuests: number;
-  totalPrice: number;
-  status: string;
-  specialRequest?: string;
-  bookingRooms: BookingRoom[];
-  customer?: { fullName: string; email: string };
-}
-
-interface BookingRoom {
-  bookingId: number;
-  roomId: number;
-  room?: { type: string; pricePerNight: number };
-}
-
-interface Payment {
-  id: number;
-  bookingId: number;
-  customerId: number;
-  amount: number;
-  status: string;
-  paymentMethod: string;
-  createdAt: string;
-}
+import { Router, RouterModule } from '@angular/router';
+import { LocationStrategy } from '@angular/common';
+import { AuthModalsComponent } from '../auth-modals/auth-modals.component';
+import { AuthService } from '../services/auth.service';
+import { Subscription } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { Booking, Hotel, RawBooking } from '../services/auth.service'
 
 @Component({
   selector: 'app-hotel-owner-bookings',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule, AuthModalsComponent],
   templateUrl: './hotel-owner-bookings.component.html',
   styleUrls: ['./hotel-owner-bookings.component.css']
 })
-export class HotelOwnerBookingsComponent implements OnInit {
+export class HotelOwnerBookingsComponent implements OnInit, OnDestroy {
   bookings: Booking[] = [];
-  payments: Payment[] = [];
   filteredBookings: Booking[] = [];
-  selectedBooking: Booking | null = null;
-  selectedPayment: Payment | null = null;
-  showPaidOnly: boolean = false;
+  hotels: Hotel[] = [];
+  selectedHotelIds: number[] = [];
+  isLoading: boolean = true;
+  searchTerm: string = '';
+  statusFilter: 'Pending' | 'Paid' | 'Cancelled' | 'All' = 'All';
+  expandedBookingId: number | null = null;
+  isModalOpen: boolean = false;
+  userFullName: string | null = null;
+  userInitial: string | null = null;
+  showUserDropdown: boolean = false;
+  showFilters: boolean = false;
+  private userSub: Subscription | undefined;
 
-  constructor(private hotelService: HotelService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private locationStrategy: LocationStrategy
+  ) {}
 
-  ngOnInit() {
-    console.log('Initializing HotelOwnerBookingsComponent');
-    this.loadData();
+  ngOnInit(): void {
+    this.userFullName = sessionStorage.getItem('userFullName');
+    this.userInitial = this.userFullName ? this.userFullName.charAt(0).toUpperCase() : null;
+
+    this.userSub = this.authService.user$.subscribe(user => {
+      this.userFullName = user ? user.fullName : null;
+      this.userInitial = this.userFullName ? this.userFullName.charAt(0).toUpperCase() : null;
+    });
+
+    this.fetchBookings();
+
+    this.locationStrategy.replaceState(null, '', '/hotel-owner-dashboard/bookings', '');
+    this.locationStrategy.pushState(null, '', '/hotel-owner-dashboard/bookings', '');
   }
 
-  loadData() {
-    forkJoin({
-      bookings: this.hotelService.getBookingsByOwner(),
-      payments: this.hotelService.getPaidBookings()
-    }).subscribe({
-      next: ({ bookings, payments }) => {
-        this.bookings = bookings;
-        this.payments = payments;
-        this.filteredBookings = [...bookings]; // Initialize with all bookings
-        console.log('Bookings Loaded:', this.bookings);
-        console.log('Payments Loaded:', this.payments);
-        console.log('Initial Filtered Bookings:', this.filteredBookings);
-        this.cdr.detectChanges(); // Force UI update
+  fetchBookings(): void {
+    this.isLoading = true;
+    const hotelIds = this.selectedHotelIds.length ? this.selectedHotelIds : undefined;
+    this.authService.getBookingsForOwner(hotelIds).subscribe({
+      next: (response) => {
+        this.hotels = response.hotels;
+        this.bookings = response.bookings.map(booking => ({
+          ...booking,
+          status: this.mapStatus(booking.status),
+          roomsBooked: booking.roomsBooked.map(room => ({
+            ...room,
+            roomType: this.mapRoomType(room.roomType)
+          }))
+        })) || [];
+        this.filteredBookings = [...this.bookings];
+        this.filterBookings();
+        this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading data:', error);
-        this.cdr.detectChanges();
+        console.error('Error fetching bookings:', error);
+        this.isLoading = false;
       }
     });
   }
 
-  filterBookings() {
-    console.log('Filtering bookings, showPaidOnly:', this.showPaidOnly);
-    console.log('Bookings before filter:', this.bookings);
-    console.log('Payments for filter:', this.payments);
-    this.filteredBookings = this.showPaidOnly
-      ? this.bookings.filter(b => this.payments.some(p => p.bookingId === b.id))
-      : [...this.bookings]; // Use spread to create new array
-    console.log('Filtered Bookings:', this.filteredBookings);
-    this.cdr.detectChanges(); // Force UI update
+  private mapStatus(status: number): 'Pending' | 'Paid' | 'Cancelled' {
+    switch (status) {
+      case 0: return 'Pending';
+      case 1: return 'Paid';
+      case 2: return 'Cancelled';
+      default: throw new Error(`Unknown status value: ${status}`);
+    }
   }
 
-  toggleFilter() {
-    this.showPaidOnly = !this.showPaidOnly;
+  private mapRoomType(roomType: number): string {
+    switch (roomType) {
+      case 0: return 'StandardWithBalcony';
+      case 1: return 'SuperiorWithBalcony';
+      case 2: return 'PremiumWithBalcony';
+      default: throw new Error(`Unknown room type value: ${roomType}`);
+    }
+  }
+
+  filterBookings(): void {
+    let filtered = [...this.bookings];
+
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        booking =>
+          booking.hotelName.toLowerCase().includes(term) ||
+          (booking.customerName?.toLowerCase().includes(term) ?? false)
+      );
+    }
+
+    if (this.statusFilter !== 'All') {
+      filtered = filtered.filter(booking => booking.status === this.statusFilter);
+    }
+
+    this.filteredBookings = filtered;
+  }
+
+  onHotelCheckboxChange(hotelId: number, event: Event): void {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    if (isChecked) {
+      this.selectedHotelIds.push(hotelId);
+    } else {
+      this.selectedHotelIds = this.selectedHotelIds.filter(id => id !== hotelId);
+    }
+    this.fetchBookings();
+  }
+
+  onSearchChange(): void {
     this.filterBookings();
   }
 
-  showDetails(booking: Booking) {
-    this.selectedBooking = booking;
-    this.selectedPayment = this.payments.find(p => p.bookingId === booking.id) || null;
-    this.cdr.detectChanges(); // Ensure popup reflects data
+  onStatusFilterChange(): void {
+    this.filterBookings();
   }
 
-  closePopup() {
-    this.selectedBooking = null;
-    this.selectedPayment = null;
-    this.cdr.detectChanges();
+  toggleBookingDetails(bookingId: number): void {
+    this.expandedBookingId = this.expandedBookingId === bookingId ? null : bookingId;
   }
 
-  getStatus(booking: Booking): string {
-    return this.payments.some(p => p.bookingId === booking.id) ? 'Paid' : 'Booked but Not Paid';
+  toggleUserDropdown(): void {
+    this.showUserDropdown = !this.showUserDropdown;
   }
 
-  getRoomIds(booking: Booking): string {
-    return booking.bookingRooms.map(br => br.roomId).join(', ');
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.showUserDropdown = false;
+    this.router.navigate(['/login']);
+  }
+
+  onModalVisibilityChange(isOpen: boolean): void {
+    this.isModalOpen = isOpen;
+  }
+
+  @HostListener('window:popstate', ['$event'])
+  onPopState(event: PopStateEvent): void {
+    if (this.authService.isLoggedIn() && this.authService.getUserRole() === 'HotelOwner') {
+      this.locationStrategy.pushState(null, '', '/hotel-owner-dashboard/bookings', '');
+      this.router.navigate(['/hotel-owner-dashboard/bookings'], { replaceUrl: true });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.userSub) {
+      this.userSub.unsubscribe();
+    }
   }
 }

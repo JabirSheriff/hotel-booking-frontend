@@ -4,33 +4,50 @@ import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
 import { AuthModalsComponent } from '../auth-modals/auth-modals.component';
 import { AuthService } from '../services/auth.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+
+interface Booking {
+  id: number;
+  hotelId: number;
+  customerId: number;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfGuests: number;
+  totalPrice: number;
+  status: string;
+  specialRequest: string;
+  // Removed hotelName since it's not in the backend response
+}
 
 @Component({
   selector: 'app-my-bookings',
   standalone: true,
-  imports: [
-    RouterModule,
-    CommonModule,
-    HeaderComponent,
-    AuthModalsComponent
-  ],
+  imports: [RouterModule, CommonModule, HeaderComponent, AuthModalsComponent],
   templateUrl: './my-bookings.component.html',
   styleUrls: ['./my-bookings.component.css']
 })
 export class MyBookingsComponent implements OnInit, OnDestroy {
-  isModalOpen: boolean = false; // Track header/auth modals visibility
+  isModalOpen: boolean = false;
   userFullName: string | null = null;
   userInitial: string | null = null;
   private userSub: Subscription | undefined;
 
-  // Tab state
-  activeTab: string = 'upcoming'; // Default to 'upcoming'
+  activeTab: string = 'upcoming';
 
-  constructor(private authService: AuthService) {}
+  upcomingBookings: Booking[] = [];
+  cancelledBookings: Booking[] = [];
+  completedBookings: Booking[] = [];
+  errorMessage: string | null = null;
+
+  constructor(
+    private authService: AuthService,
+    private http: HttpClient,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    // Fetch user data from localStorage and AuthService
     this.userFullName = localStorage.getItem('userFullName');
     this.userInitial = this.userFullName ? this.userFullName.charAt(0).toUpperCase() : null;
 
@@ -39,53 +56,74 @@ export class MyBookingsComponent implements OnInit, OnDestroy {
       this.userInitial = this.userFullName ? this.userFullName.charAt(0).toUpperCase() : null;
     });
 
-    // TODO: Fetch bookings data when content is added
-    // this.fetchBookings();
+    this.fetchBookings();
   }
 
-  // Method to switch between tabs
+  fetchBookings(): void {
+    const token = this.authService.getToken() || sessionStorage.getItem('token');
+    if (!token) {
+      console.error('No token found');
+      this.errorMessage = 'Authentication token not found. Please log in.';
+      return;
+    }
+
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    this.http.get<Booking[]>(`http://localhost:5280/api/booking/customer`, { headers })
+      .subscribe({
+        next: (bookings) => {
+          const now = new Date();
+          this.upcomingBookings = bookings.filter(b => {
+            const checkIn = new Date(b.checkInDate);
+            const checkOut = new Date(b.checkOutDate);
+            const status = b.status === 'Pending' ? 'Confirmed' : b.status;
+            return (status === 'Confirmed' || status === 'Paid') && checkIn > now;
+          });
+          this.cancelledBookings = bookings.filter(b => b.status === 'Cancelled');
+          this.completedBookings = bookings.filter(b => {
+            const checkOut = new Date(b.checkOutDate);
+            return b.status === 'Paid' && checkOut < now;
+          });
+          this.errorMessage = null;
+        },
+        error: (error) => {
+          console.error('Failed to fetch bookings:', error);
+          this.errorMessage = 'Failed to load bookings. The server endpoint may not be available. Contact support if the issue persists.';
+        }
+      });
+  }
+
   setActiveTab(tab: string): void {
     this.activeTab = tab;
   }
 
-  // Handle modal visibility changes (for auth modals)
   onModalVisibilityChange(isOpen: boolean): void {
     this.isModalOpen = isOpen;
   }
 
-  // Placeholder for fetching bookings (to be implemented later)
-  fetchBookings(): void {
-    // Example API call (to be implemented with actual backend API)
-    /*
-    this.http.get<Booking[]>(`${environment.apiUrl}/bookings`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-    }).subscribe({
-      next: (bookings) => {
-        // Filter bookings into upcoming, cancelled, and completed
-        this.upcomingBookings = bookings.filter(b => b.status === 'Confirmed' && new Date(b.checkInDate) > new Date());
-        this.cancelledBookings = bookings.filter(b => b.status === 'Cancelled');
-        this.completedBookings = bookings.filter(b => b.status === 'Completed' || new Date(b.checkOutDate) < new Date());
-      },
-      error: (error) => console.error('Failed to fetch bookings:', error)
-    });
-    */
-  }
-
-  // Placeholder for viewing booking details
   viewDetails(bookingId: number): void {
     console.log(`View details for booking ID: ${bookingId}`);
-    // TODO: Implement navigation to booking details page
+    this.router.navigate(['/booking-details', bookingId]);
   }
 
-  // Placeholder for cancelling a booking
   cancelBooking(bookingId: number): void {
     console.log(`Cancel booking ID: ${bookingId}`);
-    // TODO: Implement cancel booking logic with API call
+    const token = this.authService.getToken() || sessionStorage.getItem('token');
+    if (token && bookingId) {
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      this.http.delete(`http://localhost:5280/api/booking/${bookingId}`, { headers })
+        .subscribe({
+          next: () => {
+            this.fetchBookings();
+          },
+          error: (error) => {
+            console.error('Failed to cancel booking:', error);
+            this.errorMessage = 'Failed to cancel booking. Please try again.';
+          }
+        });
+    }
   }
 
   ngOnDestroy(): void {
-    if (this.userSub) {
-      this.userSub.unsubscribe();
-    }
+    if (this.userSub) this.userSub.unsubscribe();
   }
 }

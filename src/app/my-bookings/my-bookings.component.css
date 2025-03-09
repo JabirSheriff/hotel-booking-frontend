@@ -2,25 +2,22 @@
     max-width: 1200px;
   }
   
-  /* Fallback: Override header background for My Bookings page */
   .my-bookings-header app-header nav.bg-\[\#003b95\] {
     background-color: #ffffff !important;
   }
   
-  /* Adjust text colors for white background */
   .my-bookings-header .text-white {
-    color: #1f2937 !important; /* Tailwind's text-gray-800 */
+    color: #1f2937 !important;
   }
   
   .my-bookings-header .hover\:text-gray-200:hover {
-    color: #4b5563 !important; /* Tailwind's text-gray-600 on hover */
+    color: #4b5563 !important;
   }
   
   .my-bookings-header .text-gray-200 {
-    color: #4b5563 !important; /* Tailwind's text-gray-600 */
+    color: #4b5563 !important;
   }
   
-  /* Ensure the avatar background remains white */
   .my-bookings-header .avatar.bg-white {
     background-color: #ffffff !important;
   }

@@ -15,21 +15,15 @@
   }"
 >
   <div class="container mx-auto px-5 max-w-6xl">
-    <!-- Flex container for avatar and text -->
     <div class="flex flex-col md:flex-row md:items-center py-6">
-      <!-- Enlarged Avatar (aligned with the logo) -->
       <div class="avatar bg-white text-[#003b95] font-arial font-medium w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto md:mx-0 md:mr-6 mb-4 md:mb-0">
         {{ userInitial }}
       </div>
-
-      <!-- Welcome Message and Quote -->
       <div class="flex-1 text-center md:text-left">
         <h1 class="text-4xl font-bold text-white mb-2">Welcome to Bookr, {{ userFullName }}!</h1>
         <p class="text-xl text-gray-200 italic">“Stay. Relax. Repeat.”</p>
       </div>
     </div>
-
-    <!-- Breadcrumb Navigation -->
     <div class="py-4">
       <nav class="text-lg">
         <a
@@ -69,9 +63,7 @@
 <div class="relative">
   <div class="container mx-auto px-5 max-w-6xl">
     <div class="bg-white rounded-2xl shadow-lg p-8 absolute left-1/2 transform -translate-x-1/2 -top-48 w-full max-w-5xl min-h-[32rem]">
-      <!-- Tabs -->
       <div class="flex space-x-6 border-b border-gray-200 mb-6">
-        <!-- Upcoming Trips -->
         <button
           (click)="setActiveTab('upcoming')"
           class="flex items-center pb-2 px-2 focus:outline-none"
@@ -83,8 +75,6 @@
           <img src="upcoming.png" alt="Upcoming Icon" class="h-10 w-10 mr-2" />
           Upcoming Trips
         </button>
-
-        <!-- Cancelled -->
         <button
           (click)="setActiveTab('cancelled')"
           class="flex items-center pb-2 px-2 focus:outline-none"
@@ -96,8 +86,6 @@
           <img src="cancelled.png" alt="Cancelled Icon" class="h-10 w-10 mr-2" />
           Cancelled
         </button>
-
-        <!-- Completed -->
         <button
           (click)="setActiveTab('completed')"
           class="flex items-center pb-2 px-2 focus:outline-none"
@@ -110,22 +98,68 @@
           Completed
         </button>
       </div>
-
-      <!-- Tab Content -->
       <div>
-        <div *ngIf="activeTab === 'upcoming'" class="text-gray-600 text-center">
-          Upcoming Trips content will be added here.
+        <div *ngIf="errorMessage" class="text-center text-red-500 py-4">
+          <p>{{ errorMessage }}</p>
         </div>
-        <div *ngIf="activeTab === 'cancelled'" class="text-gray-600 text-center">
-          Cancelled bookings content will be added here.
+        <div *ngIf="activeTab === 'upcoming' && !errorMessage" class="text-gray-600">
+          <div *ngFor="let booking of upcomingBookings" class="border-b border-gray-200 py-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-lg font-semibold">Hotel {{ booking.hotelId }}</h3>
+                <p>Check-In: {{ booking.checkInDate | date:'mediumDate' }}</p>
+                <p>Check-Out: {{ booking.checkOutDate | date:'mediumDate' }}</p>
+                <p>Guests: {{ booking.numberOfGuests }}</p>
+                <p>Total: ₹{{ booking.totalPrice | number:'1.0-0' }}</p>
+                <p>Status: {{ (booking.status === 'Pending' ? 'Confirmed' : booking.status) }}</p>
+              </div>
+              <div>
+                <button (click)="viewDetails(booking.id)" class="bg-blue-600 text-white px-3 py-1 rounded-md mr-2">View</button>
+                <button *ngIf="(booking.status === 'Pending' ? 'Confirmed' : booking.status) === 'Confirmed'" (click)="cancelBooking(booking.id)" class="bg-red-600 text-white px-3 py-1 rounded-md">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <p *ngIf="upcomingBookings.length === 0 && !errorMessage" class="text-center py-4">No upcoming trips.</p>
         </div>
-        <div *ngIf="activeTab === 'completed'" class="text-gray-600 text-center">
-          Completed bookings content will be added here.
+        <div *ngIf="activeTab === 'cancelled' && !errorMessage" class="text-gray-600">
+          <div *ngFor="let booking of cancelledBookings" class="border-b border-gray-200 py-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-lg font-semibold">Hotel {{ booking.hotelId }}</h3>
+                <p>Check-In: {{ booking.checkInDate | date:'mediumDate' }}</p>
+                <p>Check-Out: {{ booking.checkOutDate | date:'mediumDate' }}</p>
+                <p>Guests: {{ booking.numberOfGuests }}</p>
+                <p>Total: ₹{{ booking.totalPrice | number:'1.0-0' }}</p>
+                <p>Status: {{ booking.status }}</p>
+              </div>
+              <div>
+                <button (click)="viewDetails(booking.id)" class="bg-blue-600 text-white px-3 py-1 rounded-md">View</button>
+              </div>
+            </div>
+          </div>
+          <p *ngIf="cancelledBookings.length === 0 && !errorMessage" class="text-center py-4">No cancelled bookings.</p>
+        </div>
+        <div *ngIf="activeTab === 'completed' && !errorMessage" class="text-gray-600">
+          <div *ngFor="let booking of completedBookings" class="border-b border-gray-200 py-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-lg font-semibold">Hotel {{ booking.hotelId }}</h3>
+                <p>Check-In: {{ booking.checkInDate | date:'mediumDate' }}</p>
+                <p>Check-Out: {{ booking.checkOutDate | date:'mediumDate' }}</p>
+                <p>Guests: {{ booking.numberOfGuests }}</p>
+                <p>Total: ₹{{ booking.totalPrice | number:'1.0-0' }}</p>
+                <p>Status: {{ booking.status }}</p>
+              </div>
+              <div>
+                <button (click)="viewDetails(booking.id)" class="bg-blue-600 text-white px-3 py-1 rounded-md">View</button>
+              </div>
+            </div>
+          </div>
+          <p *ngIf="completedBookings.length === 0 && !errorMessage" class="text-center py-4">No completed bookings.</p>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Spacer to ensure the white rectangle is visible below the blue section -->
 <div class="h-64"></div>

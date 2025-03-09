@@ -15,24 +15,14 @@ import { AuthGuard } from './auth.guard';
 import { MyBookingsComponent } from './my-bookings/my-bookings.component';
 import { HotelOwnerMyAccountComponent } from './hotel-owner-my-account/hotel-owner-my-account.component';
 import { AdminMyAccountComponent } from './admin-my-account/admin-my-account.component'; // Add this
-import { UserListComponent } from './admin-dashboard/user-list/user-list.component';
 import { AdminUserManagementComponent } from './admin-user-management/admin-user-management.component';
+import { HotelDetailsComponent } from './hotel-details/hotel-details.component';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },
   { path: 'login', component: LoginComponent },
-  {path: 'user-management', component:AdminUserManagementComponent, canActivate: [AuthGuard]},
-  // {
-  //   path: 'admin',
-  //   component: AdminDashboardComponent,
-  //   children: [
-  //     { path: 'dashboard', component: AdminDashboardComponent }, // Default dashboard content
-  //     // { path: 'properties', component: /* PropertiesComponent */ }, // Placeholder
-  //     // { path: 'bookings', component: /* BookingsComponent */ }, // Placeholder
-  //     { path: 'user-management', component: UserListComponent },
-  //     { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
-  //   ]
-  // },
+  {path: 'user-management',component:AdminUserManagementComponent, canActivate: [AuthGuard]},
+  { path: 'hotel/:id', component: HotelDetailsComponent },
   { path: 'customer-dashboard', component: CustomerDashboardComponent, canActivate: [AuthGuard] },
   { path: 'my-account', component: MyAccountComponent, canActivate: [AuthGuard] },
   { path: 'my-bookings', component: MyBookingsComponent, canActivate: [AuthGuard] },

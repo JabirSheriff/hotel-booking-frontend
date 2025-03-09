@@ -1,82 +1,191 @@
-<div class="min-h-screen bg-gray-100 p-6">
-  <h2 class="text-2xl font-bold text-blue-600 mb-4">Bookings & Payments</h2>
+<!-- Custom Navigation Bar for Hotel Owners -->
+<nav class="bg-[#003b95] h-[5rem] w-full fixed top-0 z-40" [ngClass]="{'blur-sm': isModalOpen}">
+  <div class="container mx-auto px-5 max-w-6xl h-full flex justify-between items-center">
+    <!-- Left: Logo -->
+    <div class="logo flex items-center">
+      <a routerLink="/hotel-owner-dashboard">
+        <img src="Bookr.com.png" alt="Bookr Logo" class="h-[12rem] w-auto object-contain" />
+      </a>
+    </div>
 
-  <!-- Filter Toggle -->
-  <div class="mb-4">
-    <button
-      (click)="toggleFilter()"
-      class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-    >
-      {{ showPaidOnly ? 'Show All Bookings' : 'Show Paid Only' }}
-    </button>
-  </div>
-
-  <!-- Bookings Table -->
-  <div class="bg-white p-6 rounded-lg shadow-md">
-    <table class="w-full border-collapse">
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="p-2 text-left">Booking ID</th>
-          <th class="p-2 text-left">Customer Name</th>
-          <th class="p-2 text-left">Email</th>
-          <th class="p-2 text-left">Check-In</th>
-          <th class="p-2 text-left">Check-Out</th>
-          <th class="p-2 text-left">Total Price</th>
-          <th class="p-2 text-left">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          *ngFor="let booking of filteredBookings"
-          (click)="showDetails(booking)"
-          class="cursor-pointer hover:bg-gray-100"
-        >
-          <td class="p-2 border-t">{{ booking.id }}</td>
-          <td class="p-2 border-t">{{ booking.customer?.fullName || 'N/A' }}</td>
-          <td class="p-2 border-t">{{ booking.customer?.email || 'N/A' }}</td>
-          <td class="p-2 border-t">{{ booking.checkInDate }}</td>
-          <td class="p-2 border-t">{{ booking.checkOutDate }}</td>
-          <td class="p-2 border-t">${{ booking.totalPrice }}</td>
-          <td class="p-2 border-t">
-            <span [ngClass]="{'text-green-600': getStatus(booking) === 'Paid', 'text-yellow-600': getStatus(booking) === 'Booked but Not Paid'}">
-              {{ getStatus(booking) }}
-            </span>
-          </td>
-        </tr>
-        <tr *ngIf="filteredBookings.length === 0">
-          <td colspan="7" class="p-2 text-center text-gray-600">No bookings match the current filter.</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Popup for Details -->
-  <div *ngIf="selectedBooking" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-      <h3 class="text-xl font-bold text-blue-600 mb-4">Booking Details</h3>
-      <p><strong>Booking ID:</strong> {{ selectedBooking.id }}</p>
-      <p><strong>Customer Name:</strong> {{ selectedBooking.customer?.fullName || 'N/A' }}</p>
-      <p><strong>Email:</strong> {{ selectedBooking.customer?.email || 'N/A' }}</p>
-      <p><strong>Hotel ID:</strong> {{ selectedBooking.hotelId }}</p>
-      <p><strong>Check-In:</strong> {{ selectedBooking.checkInDate }}</p>
-      <p><strong>Check-Out:</strong> {{ selectedBooking.checkOutDate }}</p>
-      <p><strong>Guests:</strong> {{ selectedBooking.numberOfGuests }}</p>
-      <p><strong>Total Price:</strong> ${{ selectedBooking.totalPrice }}</p>
-      <p><strong>Special Request:</strong> {{ selectedBooking.specialRequest || 'None' }}</p>
-      <p><strong>Rooms:</strong> {{ getRoomIds(selectedBooking) }}</p>
-      <div *ngIf="selectedPayment" class="mt-4">
-        <h4 class="text-lg font-semibold text-gray-800 mb-2">Payment Details</h4>
-        <p><strong>Payment ID:</strong> {{ selectedPayment.id }}</p>
-        <p><strong>Amount:</strong> ${{ selectedPayment.amount }}</p>
-        <p><strong>Method:</strong> {{ selectedPayment.paymentMethod }}</p>
-        <p><strong>Date:</strong> {{ selectedPayment.createdAt }}</p>
+    <!-- User Dropdown -->
+    <div class="relative flex items-center space-x-2">
+      <div class="flex items-center space-x-2">
+        <div class="avatar bg-white text-[#003b95] font-arial font-medium w-10 h-10 rounded-full flex items-center justify-center text-xl">
+          {{ userInitial }}
+        </div>
+        <span class="text-white text-lg">Hi, {{ userFullName }}!</span>
       </div>
-      <button
-        (click)="closePopup()"
-        class="mt-4 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
-      >
-        Close
+      <button (click)="toggleUserDropdown()" class="flex items-center">
+        <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
+      <div *ngIf="showUserDropdown" class="absolute right-0 top-12 w-[14rem] bg-white rounded-md shadow-lg z-10">
+        <a [routerLink]="['/hotel-owner-my-account']" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+          </svg>
+          My Account
+        </a>
+        <a [routerLink]="['/hotel-owner-dashboard/bookings']" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+          </svg>
+          Booking Management
+        </a>
+        <button (click)="logout()" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100 w-full text-left">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+          </svg>
+          Sign Out
+        </button>
+      </div>
     </div>
   </div>
+</nav>
+
+<!-- Main Content -->
+<div class="pt-[6rem] min-h-screen bg-gray-100 flex relative">
+  <!-- Sidebar: Filters (Toggleable) -->
+  <aside
+    [ngClass]="{'translate-x-0': showFilters, '-translate-x-full': !showFilters}"
+    class="w-[20rem] bg-white shadow-md p-6 fixed top-[5rem] left-0 h-[calc(100vh-5rem)] overflow-y-auto transition-transform duration-300 ease-in-out z-50"
+  >
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Filters</h2>
+
+    <!-- Hotel Filter -->
+    <div class="mb-6">
+      <h3 class="text-lg font-medium text-gray-700 mb-2">Hotels</h3>
+      <div class="space-y-2">
+        <label *ngFor="let hotel of hotels" class="flex items-center">
+          <input
+            type="checkbox"
+            [checked]="selectedHotelIds.includes(hotel.id)"
+            (change)="onHotelCheckboxChange(hotel.id, $event)"
+            class="h-4 w-4 text-[#003b95] border-gray-300 rounded focus:ring-[#003b95]"
+          />
+          <span class="ml-2 text-gray-600">{{ hotel.name }}</span>
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 p-6 transition-all duration-300" [ngClass]="{'ml-64': showFilters, 'ml-0': !showFilters}" [class.blur-sm]="isModalOpen">
+    <div class="max-w-6xl mx-auto">
+      <!-- Header with Toggle, Search, and Status Filter -->
+      <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+        <div class="flex items-center space-x-4">
+          <button (click)="toggleFilters()" class="p-2 bg-[#003b95] text-white rounded-lg hover:bg-blue-800 transition duration-200">
+            <svg
+              [ngClass]="{'rotate-180': showFilters}"
+              class="w-6 h-6 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <h1 class="text-2xl font-bold text-gray-800">Booking Management</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="relative w-64">
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearchChange()"
+              placeholder="Search by hotel or customer"
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003b95]"
+            />
+            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <select
+            [(ngModel)]="statusFilter"
+            (ngModelChange)="onStatusFilterChange()"
+            class="w-40 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003b95]"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="space-y-4">
+        <div *ngFor="let i of [1, 2, 3]" class="bg-white p-4 rounded-lg shadow-md animate-shimmer">
+          <div class="h-6 bg-gray-200 rounded w-1/2 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+        </div>
+      </div>
+
+      <!-- Bookings List -->
+      <div *ngIf="!isLoading && filteredBookings.length > 0" class="space-y-4">
+        <div *ngFor="let booking of filteredBookings" class="bg-white p-4 rounded-lg shadow-md">
+          <div class="flex justify-between items-center cursor-pointer" (click)="toggleBookingDetails(booking.bookingId)">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">{{ booking.hotelName }}</h3>
+              <p class="text-sm text-gray-600">Booking ID: {{ booking.bookingId }}</p>
+            </div>
+            <div class="flex items-center space-x-4">
+              <span
+                [ngClass]="{
+                  'bg-yellow-100 text-yellow-800': booking.status === 'Pending',
+                  'bg-green-100 text-green-800': booking.status === 'Paid',
+                  'bg-red-100 text-red-800': booking.status === 'Cancelled'
+                }"
+                class="px-2 py-1 rounded-full text-sm font-medium"
+              >
+                {{ booking.status }}
+              </span>
+              <svg
+                [ngClass]="{'rotate-180': expandedBookingId === booking.bookingId}"
+                class="w-5 h-5 text-gray-500 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+
+          <div *ngIf="expandedBookingId === booking.bookingId" class="mt-4 border-t pt-4 text-gray-600">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p><strong>Customer:</strong> {{ booking.customerName || 'N/A' }}</p>
+                <p><strong>Check-In:</strong> {{ booking.checkInDate | date }}</p>
+                <p><strong>Check-Out:</strong> {{ booking.checkOutDate | date }}</p>
+                <p><strong>Guests:</strong> {{ booking.numberOfGuests }}</p>
+              </div>
+              <div>
+                <p><strong>Total Price:</strong> {{ booking.totalPrice | currency }}</p>
+                <p><strong>Rooms Booked:</strong> {{ booking.roomsBookedCount }}</p>
+                <ul class="list-disc ml-5">
+                  <li *ngFor="let room of booking.roomsBooked">
+                    Room {{ room.roomNumber }} ({{ room.roomType }}) - {{ room.pricePerNight | currency }}/night
+                  </li>
+                </ul>
+                <p *ngIf="booking.specialRequest"><strong>Special Request:</strong> {{ booking.specialRequest }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Bookings Message -->
+      <div *ngIf="!isLoading && filteredBookings.length === 0" class="text-center text-gray-600 py-10">
+        No bookings found matching your criteria.
+      </div>
+    </div>
+  </main>
 </div>
+
+<!-- Auth Modals -->
+<app-auth-modals (modalVisibilityChange)="onModalVisibilityChange($event)"></app-auth-modals>
